@@ -85,7 +85,7 @@ export default function LoginPage() {
 
           {/* Logo */}
           <Image
-            src="/images/ldcu_seal.png"
+            src="/images/Ldcu_seal.png"
             alt="Liceo de Cagayan University Seal"
             width={60}
             height={60}
