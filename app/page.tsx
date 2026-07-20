@@ -148,13 +148,8 @@ export default function LoginPage() {
                 className="object-contain flex-shrink-0"
                 priority
               />
-            </div>
-            <div className="leading-tight">
-              <p className="font-bold text-sm text-white">DITLS</p>
-              <p className="text-[10px] text-white/60 capitalize">
-                {role} Panel
-              </p>
-            </div>
+          </div>
+            <span className="text-xl font-bold text-slate-900 dark:text-white">DITLS</span>
           </div>
 
           <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-1">Welcome Back</h2>
