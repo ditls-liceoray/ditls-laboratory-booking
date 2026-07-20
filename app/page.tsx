@@ -138,14 +138,14 @@ export default function LoginPage() {
         </button>
 
         <div className="w-full max-w-md animate-slide-up">
-          <div className="lg:hidden flex items-center gap-3 mb-8">
+          <div className="lg:hidden flex items-center gap-3 mb-8 -mt-6">
             <div className="h-16 flex items-center gap-3 px-4 border-b border-white/10">
               <Image
                 src="/images/Ldcu_seal.png"
                 alt="Liceo Logo"
                 width={40}
                 height={40}
-                className="object-contain flex-shrink-0"
+                className="object-contain"
                 priority
               />
           </div>
