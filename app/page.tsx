@@ -61,7 +61,7 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex flex-col lg:flex-row bg-gradient-to-br from-blue-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
       {/* Left brand panel */}
-      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-gradient-to-br from-[#6B0F1A] via-[#800000] to-[#3D0000] dark:from-[#4A0000] dark:via-[#300000] dark:to-[#1A0000]">
+      <div className="flex w-full lg:w-1/2 relative overflow-hidden bg-gradient-to-br from-[#6B0F1A] via-[#800000] to-[#3D0000] dark:from-[#4A0000] dark:via-[#300000] dark:to-[#1A0000]">
         <div className="absolute inset-0 opacity-10" style={{
           backgroundImage: 'radial-gradient(circle at 25% 25%, white 2px, transparent 2px), radial-gradient(circle at 75% 75%, white 2px, transparent 2px)',
           backgroundSize: '60px 60px',
@@ -69,10 +69,10 @@ export default function LoginPage() {
 
         {/* <div className="absolute top-6 right-8 flex items-center gap-4 animate-slideDown"> */}
 
-        <div className="absolute top-4 right-4 md:top-6 md:right-8 flex items-center gap-2 md:gap-4 animate-slideDown">
-
-          {/* Text */}
-          <div className="text-left">
+        {/* <div className="absolute top-4 right-4 md:top-6 md:right-8 flex items-center gap-2 md:gap-4 animate-slideDown">
+ */}
+         
+          {/* <div className="text-left">
             <h1 className="text-white text-[20px] font-bold tracking-wide leading-tight">
               LICEO DE CAGAYAN UNIVERSITY
             </h1>
@@ -81,17 +81,17 @@ export default function LoginPage() {
               Rodolfo N. Pelaez Boulevard, Brgy. Kauswagan,<br />
               Cagayan de Oro City, Misamis Oriental, Philippines
             </p>
-          </div>
+          </div> */}
 
-          {/* Logo */}
-          <Image
-            src="/images/Ldcu_seal.png"
+      
+          {/* <Image
+            src="/images/ldcu_seal.png"
             alt="Liceo de Cagayan University Seal"
             width={60}
             height={60}
             className="w-10 h-10 md:w-16 md:h-16 object-contain"
           />
-        </div>
+        </div> */}
 
         {/* <div className="relative z-10 flex flex-col justify-center px-16 text-white">
           <div className="flex items-center gap-3 mb-8">
