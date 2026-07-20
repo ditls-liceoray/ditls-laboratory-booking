@@ -11,7 +11,6 @@ import { Monitor, Loader2, Eye, EyeOff, Sun, Moon, ShieldCheck, User } from 'luc
 import { useTheme } from '@/lib/theme-context';
 import { toast } from 'sonner';
 import { logActivity } from '@/lib/api';
-import Image from "next/image";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -61,106 +60,35 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex flex-col lg:flex-row bg-gradient-to-br from-blue-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
       {/* Left brand panel */}
-      <div className="flex w-full lg:w-1/2 min-h-[45vh] lg:min-h-screen relative overflow-hidden bg-gradient-to-br from-[#6B0F1A] via-[#800000] to-[#3D0000] dark:from-[#4A0000] dark:via-[#300000] dark:to-[#1A0000]">
-  <div
-    className="absolute inset-0 opacity-10"
-    style={{
-      backgroundImage:
-        'radial-gradient(circle at 25% 25%, white 2px, transparent 2px), radial-gradient(circle at 75% 75%, white 2px, transparent 2px)',
-      backgroundSize: '60px 60px',
-    }}
-  />
-</div>
-
-        {/* <div className="absolute top-6 right-8 flex items-center gap-4 animate-slideDown"> */}
-
-        {/* <div className="absolute top-4 right-4 md:top-6 md:right-8 flex items-center gap-2 md:gap-4 animate-slideDown">
- */}
-         
-          {/* <div className="text-left">
-            <h1 className="text-white text-[20px] font-bold tracking-wide leading-tight">
-              LICEO DE CAGAYAN UNIVERSITY
-            </h1>
-
-            <p className="text-white/80 text-[10px] leading-4 mt-1">
-              Rodolfo N. Pelaez Boulevard, Brgy. Kauswagan,<br />
-              Cagayan de Oro City, Misamis Oriental, Philippines
-            </p>
-          </div> */}
-
-      
-          {/* <Image
-            src="/images/ldcu_seal.png"
-            alt="Liceo de Cagayan University Seal"
-            width={60}
-            height={60}
-            className="w-10 h-10 md:w-16 md:h-16 object-contain"
-          />
-        </div> */}
-
-        {/* <div className="relative z-10 flex flex-col justify-center px-16 text-white">
+      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-gradient-to-br from-blue-600 to-blue-800 dark:from-blue-900 dark:to-slate-900">
+        <div className="absolute inset-0 opacity-10" style={{
+          backgroundImage: 'radial-gradient(circle at 25% 25%, white 2px, transparent 2px), radial-gradient(circle at 75% 75%, white 2px, transparent 2px)',
+          backgroundSize: '60px 60px',
+        }} />
+        <div className="relative z-10 flex flex-col justify-center px-16 text-white">
           <div className="flex items-center gap-3 mb-8">
             <div className="h-14 w-14 rounded-2xl bg-white/20 backdrop-blur flex items-center justify-center">
               <Monitor className="h-8 w-8" />
             </div>
             <span className="text-2xl font-bold tracking-tight">DITLS</span>
-          </div> */}
-
-        <div className="relative z-10 flex flex-col justify-center px-16 text-white">
-          <div className="flex items-center gap-3 mb-8">
-            <div className="h-11 w-11 rounded-xl bg-white/20 backdrop-blur flex items-center justify-center">
-              <Monitor className="h-6 w-6" />
-            </div>
-
-            <span className="text-xl font-bold tracking-tight">
-              DITLS
-            </span>
           </div>
-
-          {/* <h1 className="text-4xl font-bold leading-tight mb-4">
-            Computer And  Laboratory<br />Booking System
+          <h1 className="text-4xl font-bold leading-tight mb-4">
+            Computer Laboratory<br />Booking System
           </h1>
-          <p className="text-blue-100 text-lg max-w-md">
-          Developed by Raymund Luceño exclusively for Liceo DITLS faculty members to simplify Computer And Robotics Laboratory reservations.
-          </p>
-          <div className="mt-12 space-y-4">
-            {[
-              'Real-Time Laboratory Availability',
-              'Faculty-Only Secure Access',
-              'Smart Schedule & Calendar Management',
-              'Instant Booking Notifications',
-            ].map((feat) => (
-              <div key={feat} className="flex items-center gap-3 text-blue-50">
-                <div className="h-2 w-2 rounded-full bg-blue-200" />
-                {feat}
-              </div>
-            ))}
-          </div> */}
-
-          <h1 className="text-5xl md:text-5xl font-extrabold leading-tight tracking-tight mb-6 text-white">
-            Computer and Laboratory
-            <br />
-            Booking System
-          </h1>
-
           <p className="text-[#F5DADA] text-lg leading-8 max-w-lg font-normal">
             Developed by <span className="font-semibold text-white">Raymund Luceño</span> exclusively
             for <span className="font-semibold text-white">Liceo Department of Integrated Technology and Learning Systems</span> faculty members to
             streamline Computer and Robotics Laboratory reservations.
           </p>
-
-          <div className="mt-12 space-y-5">
+          <div className="mt-12 space-y-4">
             {[
-              "Real-Time Laboratory Availability",
-              "Faculty-Only Secure Access",
-              "Smart Schedule & Calendar Management",
-              "Instant Booking Notifications",
+              'Real-time conflict detection',
+              'Role-based access control',
+              'Calendar & schedule management',
+              'Instant notifications',
             ].map((feat) => (
-              <div
-                key={feat}
-                className="flex items-center gap-4 text-[#F8EAEA] text-lg font-medium"
-              >
-                <div className="h-2.5 w-2.5 rounded-full bg-[#F4C542] shadow-md" />
+              <div key={feat} className="flex items-center gap-3 text-blue-50">
+                <div className="h-2 w-2 rounded-full bg-blue-200" />
                 {feat}
               </div>
             ))}
@@ -236,7 +164,6 @@ export default function LoginPage() {
                   id="remember"
                   checked={remember}
                   onCheckedChange={(v) => setRemember(!!v)}
-                /* className="border-[#800000] data-[state=checked]:bg-[#800000] data-[state=checked]:border-[#800000] text-white" */
                 />
                 <Label htmlFor="remember" className="text-sm cursor-pointer">Remember Me</Label>
               </div>
@@ -249,21 +176,27 @@ export default function LoginPage() {
               </button>
             </div>
 
-            <Button type="submit" className="w-full h-11" disabled={submitting}> {submitting ? (<> <Loader2 className="h-4 w-4 mr-2 animate-spin"
-            /> Signing in... </>) : ('Sign In')}
-
+            <Button type="submit" className="w-full h-11" disabled={submitting}>
+              {submitting ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Signing in...
+                </>
+              ) : (
+                'Sign In'
+              )}
             </Button>
           </form>
 
-          {/*  <div className="mt-6 p-4 rounded-lg bg-blue-50 dark:bg-blue-950/40 border border-blue-100 dark:border-blue-900">
+          <div className="mt-6 p-4 rounded-lg bg-blue-50 dark:bg-blue-950/40 border border-blue-100 dark:border-blue-900">
             <p className="text-sm font-medium text-blue-900 dark:text-blue-200 mb-1">
               Default Administrator Login
             </p>
             <p className="text-xs text-blue-700 dark:text-blue-300">
               Username: <span className="font-mono font-bold">admin</span> &nbsp;|&nbsp;
-              Password: <span className="font-mono font-bold">admin123</span>
+              Password: <span className="font-mono font-bold">CLBS@Admin#2024</span>
             </p>
-          </div> */}
+          </div>
         </div>
       </div>
 
