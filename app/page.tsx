@@ -61,8 +61,7 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex flex-col lg:flex-row bg-gradient-to-br from-blue-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
       {/* Left brand panel */}
-      <div className="flex w-full lg:w-1/2 relative overflow-hidden bg-gradient-to-br from-[#6B0F1A] via-[#800000] to-[#3D0000] dark:from-[#4A0000] dark:via-[#300000] dark:to-[#1A0000]">
-        <div className="absolute inset-0 opacity-10" style={{
+      <div className="flex w-full lg:w-1/2 min-h-[45vh] lg:min-h-screen relative overflow-hidden bg-gradient-to-br from-[#6B0F1A] via-[#800000] to-[#3D0000] dark:from-[#4A0000] dark:via-[#300000] dark:to-[#1A0000]">
           backgroundImage: 'radial-gradient(circle at 25% 25%, white 2px, transparent 2px), radial-gradient(circle at 75% 75%, white 2px, transparent 2px)',
           backgroundSize: '60px 60px',
         }} />
