@@ -11,6 +11,8 @@ import { Monitor, Loader2, Eye, EyeOff, Sun, Moon, ShieldCheck, User } from 'luc
 import { useTheme } from '@/lib/theme-context';
 import { toast } from 'sonner';
 import { logActivity } from '@/lib/api';
+import Image from "next/image";
+import { motion } from "framer-motion";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -60,20 +62,49 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex flex-col lg:flex-row bg-gradient-to-br from-blue-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
       {/* Left brand panel */}
-      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-gradient-to-br from-blue-600 to-blue-800 dark:from-blue-900 dark:to-slate-900">
+      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-gradient-to-br from-[#6B0F1A] via-[#800000] to-[#3D0000] dark:from-[#4A0000] dark:via-[#300000] dark:to-[#1A0000]">
         <div className="absolute inset-0 opacity-10" style={{
           backgroundImage: 'radial-gradient(circle at 25% 25%, white 2px, transparent 2px), radial-gradient(circle at 75% 75%, white 2px, transparent 2px)',
           backgroundSize: '60px 60px',
         }} />
         <div className="relative z-10 flex flex-col justify-center px-16 text-white">
           <div className="flex items-center gap-3 mb-8">
-            <div className="h-14 w-14 rounded-2xl bg-white/20 backdrop-blur flex items-center justify-center">
+            {/* <div className="h-14 w-14 rounded-2xl bg-white/20 backdrop-blur flex items-center justify-center">
               <Monitor className="h-8 w-8" />
-            </div>
-            <span className="text-2xl font-bold tracking-tight">DITLS</span>
+            </div> */}
+
+
+            <motion.div
+              initial={{ opacity: 0, scale: 0.7 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{
+                duration: 0.8,
+                ease: "easeOut",
+              }}
+              className="h-30 w-30 flex items-center justify-center"
+            >
+              <Image
+                src="/images/Ldcu_seal.png"
+                alt="Liceo Logo"
+                width={100}
+                height={100}
+                className="object-contain"
+              />
+            </motion.div>
+
+            {/* <div className="h-12 w-12 flex items-center justify-center">
+              <Image
+                src="/images/Ldcu_seal.png"
+                alt="Liceo Logo"
+                width={48}
+                height={48}
+                className="object-contain"
+              />
+            </div> */}
+            <span className="text-xl font-bold tracking-tight">DITLS</span>
           </div>
           <h1 className="text-4xl font-bold leading-tight mb-4">
-            Computer Laboratory<br />Booking System
+            Computer & Robotics Laboratory<br />Booking System
           </h1>
           <p className="text-[#F5DADA] text-lg leading-8 max-w-lg font-normal">
             Developed by <span className="font-semibold text-white">Raymund Luceño</span> exclusively
@@ -111,7 +142,7 @@ export default function LoginPage() {
             <div className="h-12 w-12 rounded-xl bg-blue-600 flex items-center justify-center">
               <Monitor className="h-7 w-7 text-white" />
             </div>
-            <span className="text-xl font-bold text-slate-900 dark:text-white">CLBS</span>
+            <span className="text-xl font-bold text-slate-900 dark:text-white">DITLS</span>
           </div>
 
           <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-1">Welcome Back</h2>

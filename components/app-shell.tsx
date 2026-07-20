@@ -11,6 +11,7 @@ import type { Notification } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import Image from "next/image";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -334,12 +335,22 @@ function SidebarContent({ nav, pathname, role, onNavigate }: { nav: NavItem[]; p
   return (
     <>
       <div className="h-16 flex items-center gap-3 px-6 border-b border-white/10">
-        <div className="h-9 w-9 rounded-xl bg-white/15 flex items-center justify-center">
-          <Monitor className="h-5 w-5" />
+        <div className="h-10 w-10 flex items-center justify-center">
+          <Image
+            src="/images/Ldcu_seal.png"
+            alt="Liceo Logo"
+            width={40}
+            height={40}
+            className="object-contain"
+            priority
+          />
         </div>
+
         <div>
           <p className="font-bold text-sm leading-tight">DITLS</p>
-          <p className="text-[10px] text-white/60 capitalize">{role} Panel</p>
+          <p className="text-[10px] text-white/60 capitalize">
+            {role} Panel
+          </p>
         </div>
       </div>
       <nav className="flex-1 overflow-y-auto py-4 px-3 scrollbar-thin">

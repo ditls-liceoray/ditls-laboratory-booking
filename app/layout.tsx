@@ -8,11 +8,16 @@ import { Toaster } from '@/components/ui/sonner';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'DITLS — Computer & Robotics Laboratory Booking System',
+  title: "DITLS — Computer & Robotics Laboratory Booking System",
   description:
-    'A modern, responsive Computer Laboratory Booking System for universities.',
-};
+    "A modern, responsive Computer Laboratory Booking System for universities.",
 
+  icons: {
+    icon: "/images/Ldcu_seal.png",
+    shortcut: "/images/Ldcu_seal.png",
+    apple: "/images/Ldcu_seal.png",
+  },
+};
 export default function RootLayout({
   children,
 }: {
