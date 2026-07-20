@@ -139,17 +139,22 @@ export default function LoginPage() {
 
         <div className="w-full max-w-md animate-slide-up">
           <div className="lg:hidden flex items-center gap-3 mb-8 justify-center">
-            {/* <div className="h-12 w-12 rounded-xl bg-blue-600 flex items-center justify-center"> */}
+            <div className="h-16 flex items-center gap-3 px-4 border-b border-white/10">
               <Image
                 src="/images/Ldcu_seal.png"
                 alt="Liceo Logo"
                 width={40}
                 height={40}
-                className="object-contain"
+                className="object-contain flex-shrink-0"
                 priority
               />
-            {/* </div> */}
-            <span className="text-xl font-bold text-slate-900 dark:text-white">DITLS</span>
+            </div>
+            <div className="leading-tight">
+              <p className="font-bold text-sm text-white">DITLS</p>
+              <p className="text-[10px] text-white/60 capitalize">
+                {role} Panel
+              </p>
+            </div>
           </div>
 
           <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-1">Welcome Back</h2>
