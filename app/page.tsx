@@ -188,7 +188,7 @@ export default function LoginPage() {
             </Button>
           </form>
 
-          <div className="mt-6 p-4 rounded-lg bg-blue-50 dark:bg-blue-950/40 border border-blue-100 dark:border-blue-900">
+          {/* <div className="mt-6 p-4 rounded-lg bg-blue-50 dark:bg-blue-950/40 border border-blue-100 dark:border-blue-900">
             <p className="text-sm font-medium text-blue-900 dark:text-blue-200 mb-1">
               Default Administrator Login
             </p>
@@ -196,7 +196,7 @@ export default function LoginPage() {
               Username: <span className="font-mono font-bold">admin</span> &nbsp;|&nbsp;
               Password: <span className="font-mono font-bold">CLBS@Admin#2024</span>
             </p>
-          </div>
+          </div> */}
         </div>
       </div>
 
