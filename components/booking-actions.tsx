@@ -56,7 +56,7 @@ export function BookingDetails({ booking, onClose }: { booking: Booking; onClose
             <Detail label="Department" value={booking.teacher?.department || '—'} />
             <Detail label="Class Name" value={booking.class_name} />
             <Detail label="Subject" value={booking.subject} />
-            <Detail label="Course" value={booking.course || '—'} />
+            <Detail label="Strand" value={booking.course || '—'} />
             <Detail label="Year / Section" value={`${booking.year_level || '—'} / ${booking.section || '—'}`} />
             <Detail label="Laboratory" value={booking.laboratory?.name || '—'} />
             <Detail label="Location" value={booking.laboratory?.location || '—'} />

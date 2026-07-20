@@ -86,7 +86,7 @@ export default function MyAppointmentsPage() {
     w.document.write(`
       <html><head><title>Booking Slip - ${b.reference_no}</title>
       <style>body{font-family:Arial,sans-serif;padding:40px;max-width:600px;margin:auto}h1{color:#2563eb}.ref{font-size:24px;font-weight:bold}table{width:100%;border-collapse:collapse;margin-top:20px}td{padding:8px;border-bottom:1px solid #ddd}td:first-child{font-weight:bold;width:40%;color:#555}</style>
-      </head><body><h1>CLBS Booking Slip</h1><p class="ref">${b.reference_no}</p><table>
+      </head><body><h1>Computer and Robotics Booking Slip</h1><p class="ref">${b.reference_no}</p><table>
       <tr><td>Teacher</td><td>${teacher ? fullName(teacher) : '—'}</td></tr>
       <tr><td>Class</td><td>${b.class_name}</td></tr><tr><td>Subject</td><td>${b.subject}</td></tr>
       <tr><td>Laboratory</td><td>${b.laboratory?.name || '—'}</td></tr>

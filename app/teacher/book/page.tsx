@@ -199,14 +199,14 @@ export default function BookLaboratoryPage() {
               <Label>Class Name <span className="text-rose-500">*</span></Label>
               <Input value={form.class_name} onChange={(e) => setForm({ ...form, class_name: e.target.value })} placeholder="e.g. CS101 - Intro to Programming" />
               {errors.class_name && <p className="text-xs text-rose-500">{errors.class_name}</p>}
-            </div>
+            </div>  
             <div className="space-y-2">
               <Label>Subject <span className="text-rose-500">*</span></Label>
               <Input value={form.subject} onChange={(e) => setForm({ ...form, subject: e.target.value })} placeholder="e.g. Data Structures" />
               {errors.subject && <p className="text-xs text-rose-500">{errors.subject}</p>}
             </div>
             <div className="space-y-2">
-              <Label>Course</Label>
+              <Label>Strand</Label>
               <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm" value={form.course} onChange={(e) => setForm({ ...form, course: e.target.value })}>
                 {COURSES.map((c) => <option key={c} value={c}>{c}</option>)}
               </select>
