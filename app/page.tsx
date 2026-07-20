@@ -139,7 +139,7 @@ export default function LoginPage() {
 
         <div className="w-full max-w-md animate-slide-up">
           <div className="lg:hidden flex items-center gap-3 mb-8 justify-center">
-            <div className="h-12 w-12 rounded-xl bg-blue-600 flex items-center justify-center">
+            {/* <div className="h-12 w-12 rounded-xl bg-blue-600 flex items-center justify-center"> */}
               <Image
                 src="/images/Ldcu_seal.png"
                 alt="Liceo Logo"
@@ -148,7 +148,7 @@ export default function LoginPage() {
                 className="object-contain"
                 priority
               />
-            </div>
+            {/* </div> */}
             <span className="text-xl font-bold text-slate-900 dark:text-white">DITLS</span>
           </div>
 
