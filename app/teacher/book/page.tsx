@@ -53,7 +53,7 @@ export default function BookLaboratoryPage() {
       return;
     }
     (async () => {
-      const { data } = await supabase
+      /* const { data } = await supabase
         .from('bookings')
         .select('reference_no, start_time, end_time')
         .eq('laboratory_id', form.laboratory_id)
@@ -65,7 +65,29 @@ export default function BookLaboratoryPage() {
         setConflict(`Conflict detected: ${data.length} booking(s) already exist for this time slot.`);
       } else {
         setConflict(null);
+      } */
+      const { data, error } = await supabase.rpc(
+        'check_booking_conflict',
+        {
+          p_laboratory_id: form.laboratory_id,
+          p_booking_date: form.booking_date,
+          p_start_time: form.start_time,
+          p_end_time: form.end_time,
+        }
+      );
+
+      if (error) {
+        console.error(error);
+        setConflict(null);
+        return;
       }
+
+      if (data) {
+        setConflict('Conflict detected: This laboratory is already booked for the selected time.');
+      } else {
+        setConflict(null);
+      }
+
     })();
   }, [form.laboratory_id, form.booking_date, form.start_time, form.end_time]);
 
@@ -199,7 +221,7 @@ export default function BookLaboratoryPage() {
               <Label>Class Name <span className="text-rose-500">*</span></Label>
               <Input value={form.class_name} onChange={(e) => setForm({ ...form, class_name: e.target.value })} placeholder="e.g. CS101 - Intro to Programming" />
               {errors.class_name && <p className="text-xs text-rose-500">{errors.class_name}</p>}
-            </div>  
+            </div>
             <div className="space-y-2">
               <Label>Subject <span className="text-rose-500">*</span></Label>
               <Input value={form.subject} onChange={(e) => setForm({ ...form, subject: e.target.value })} placeholder="e.g. Data Structures" />
