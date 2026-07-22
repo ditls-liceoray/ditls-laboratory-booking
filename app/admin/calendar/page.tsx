@@ -78,8 +78,21 @@ export default function CalendarPage() {
     });
   }, [current]);
 
-  const dateKey = (d: Date) => d.toISOString().slice(0, 10);
-  const todayKey = new Date().toISOString().slice(0, 10);
+  /* const dateKey = (d: Date) => d.toISOString().slice(0, 10);
+  const todayKey = new Date().toISOString().slice(0, 10); */
+
+  const dateKey = (d: Date) => {
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  const today = new Date();
+
+  const todayKey = `${today.getFullYear()}-${String(
+    today.getMonth() + 1
+  ).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
 
   const legend = [
     { color: 'bg-emerald-500', label: 'Approved' },
