@@ -107,7 +107,7 @@ export default function LoginPage() {
             Computer & Robotics Laboratory<br />Booking System
           </h1>
           <p className="text-[#F5DADA] text-lg leading-8 max-w-lg font-normal">
-            Developed by <span className="font-semibold text-white">Raymund Luceño</span> exclusively
+            Developed by <span className="font-semibold text-white">WEBDev Raymund Luceño</span> exclusively
             for <span className="font-semibold text-white">Liceo Department of Integrated Technology and Life Skills</span> faculty members to
             streamline Computer and Robotics Laboratory reservations.
           </p>

@@ -78,7 +78,9 @@ export default function NotificationsPage() {
                       <p className="font-semibold text-sm">{n.title}</p>
                       {!n.read && <span className="h-2 w-2 rounded-full bg-primary" />}
                     </div>
-                    <p className="text-sm text-muted-foreground mt-0.5">{n.message}</p>
+                    <p className="text-sm text-muted-foreground mt-0.5 whitespace-pre-wrap">
+  {n.message}
+</p>
                     <p className="text-xs text-muted-foreground mt-1">{formatDateTime(n.created_at)}</p>
                   </div>
                 </div>

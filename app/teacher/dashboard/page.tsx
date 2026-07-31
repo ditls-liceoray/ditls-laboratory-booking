@@ -10,6 +10,7 @@ import type { Booking, Notification } from '@/lib/types';
 import { StatCard, StatusBadge, EmptyState } from '@/components/shared';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+
 import {
   CalendarCheck, Clock, CheckCircle, XCircle, CalendarDays, Plus, Bell, Monitor, ArrowRight, Loader2,
 } from 'lucide-react';
@@ -157,9 +158,31 @@ export default function TeacherDashboardPage() {
             ) : (
               <div className="space-y-2">
                 {notifications.map((n) => (
-                  <div key={n.id} className={cn('p-3 rounded-lg border', !n.read && 'bg-blue-50/50 dark:bg-blue-950/20')}>
-                    <p className="text-sm font-medium">{n.title}</p>
-                    <p className="text-xs text-muted-foreground">{n.message}</p>
+                  <div
+                    key={n.id}
+                    className={cn(
+                      'p-3 rounded-lg border',
+                      !n.read && 'bg-blue-50/50 dark:bg-blue-950/20'
+                    )}
+                  >
+                    <p className="text-sm font-medium">
+                      {n.title}
+                    </p>
+
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {n.message.slice(0, 120)}
+                      {n.message.length > 120 && "..."}
+                    </p>
+
+                    <p className="text-[11px] text-muted-foreground mt-2">
+                      {new Date(n.created_at).toLocaleString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                        hour: "numeric",
+                        minute: "2-digit",
+                      })}
+                    </p>
                   </div>
                 ))}
               </div>

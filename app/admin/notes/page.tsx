@@ -48,13 +48,70 @@ export default function NotesPage() {
     setSaving(true);
     try {
       if (editing) {
-        const { error } = await supabase.from('notes').update({ type: form.type, title: form.title, content: form.content, pinned: form.pinned }).eq('id', editing.id);
+        const { error } = await supabase
+          .from('notes')
+          .update({
+            type: form.type,
+            title: form.title,
+            content: form.content,
+            pinned: form.pinned,
+          })
+          .eq('id', editing.id);
+
         if (error) throw error;
+
+        // Update all related notifications
+        const { error: notifError } = await supabase
+          .from('notifications')
+          .update({
+            title: form.title,
+            message: form.content,
+          })
+          .eq('note_id', editing.id);
+
+        if (notifError) throw notifError;
+
         await logActivity('update_note', `Updated note: ${form.title}`);
         toast.success('Note updated.');
       } else {
-        const { error } = await supabase.from('notes').insert({ type: form.type, title: form.title, content: form.content, pinned: form.pinned });
+        // Create the note first
+        const { data: note, error } = await supabase
+          .from('notes')
+          .insert({
+            type: form.type,
+            title: form.title,
+            content: form.content,
+            pinned: form.pinned,
+          })
+          .select()
+          .single();
+
         if (error) throw error;
+
+        // Get all teachers
+        const { data: teachers, error: teacherError } = await supabase
+          .from('teachers')
+          .select('profile_id');
+
+        if (teacherError) throw teacherError;
+
+        if (teachers && teachers.length > 0) {
+          const notifications = teachers.map((teacher) => ({
+            note_id: note.id,            // ✅ IMPORTANTE
+            user_id: teacher.profile_id,
+            title: form.title,
+            message: form.content,
+            type: 'info',
+            read: false,
+          }));
+
+          const { error: notifError } = await supabase
+            .from('notifications')
+            .insert(notifications);
+
+          if (notifError) throw notifError;
+        }
+
         await logActivity('create_note', `Created note: ${form.title}`);
         toast.success('Note created.');
       }
@@ -62,8 +119,14 @@ export default function NotesPage() {
       setEditing(null);
       setForm({ type: 'announcement', title: '', content: '', pinned: false });
       load();
-    } catch (e: unknown) {
-      toast.error(e instanceof Error ? e.message : 'Failed to save note.');
+    } catch (e: any) {
+      console.error("SAVE NOTE ERROR:", e);
+
+      if (e?.message) {
+        toast.error(e.message);
+      } else {
+        toast.error(JSON.stringify(e));
+      }
     } finally {
       setSaving(false);
     }
@@ -71,10 +134,32 @@ export default function NotesPage() {
 
   const del = async () => {
     if (!deleteTarget) return;
-    const { error } = await supabase.from('notes').delete().eq('id', deleteTarget.id);
-    if (error) { toast.error('Failed to delete.'); return; }
+
+    // Delete all notifications linked to this note
+    const { error: notifError } = await supabase
+      .from('notifications')
+      .delete()
+      .eq('note_id', deleteTarget.id);
+
+    if (notifError) {
+      toast.error(notifError.message);
+      return;
+    }
+
+    // Delete the note
+    const { error } = await supabase
+      .from('notes')
+      .delete()
+      .eq('id', deleteTarget.id);
+
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+
     await logActivity('delete_note', `Deleted note: ${deleteTarget.title}`);
     toast.success('Note deleted.');
+
     setDeleteTarget(null);
     load();
   };
