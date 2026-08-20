@@ -117,6 +117,8 @@ export default function NotesPage() {
               .filter((email) => email) || [];
           console.log("Teachers:", teachers);
           console.log("Emails:", emails);
+          /* console.log("Total teachers:", teachers?.length || 0);
+          console.log("Total emails:", emails.length); */
 
           if (emails.length > 0) {
             const response = await fetch("/api/send-announcement", {
@@ -125,14 +127,15 @@ export default function NotesPage() {
                 "Content-Type": "application/json",
               },
               body: JSON.stringify({
-                emails: ["rluceno@liceo.edu.ph"],
+                emails: emails,
                 title: form.title,
                 message: form.content,
               }),
             });
 
             const result = await response.json();
-            console.log("Resend response:", result);
+
+            console.log("Gmail SMTP response:", result);
 
             if (!response.ok) {
               console.error("Email Error:", result);
@@ -141,142 +144,147 @@ export default function NotesPage() {
               console.log("Email sent:", result);
             }
           }
+
+          await logActivity('create_note', `Created note: ${form.title}`);
+          toast.success('Note created.');
         }
-
-        await logActivity('create_note', `Created note: ${form.title}`);
-        toast.success('Note created.');
+        setShowForm(false);
+        setEditing(null);
+        setForm({ type: 'announcement', title: '', content: '', pinned: false });
+        load();
       }
-      setShowForm(false);
-      setEditing(null);
-      setForm({ type: 'announcement', title: '', content: '', pinned: false });
-      load();
     } catch (e: any) {
-      console.error("SAVE NOTE ERROR:", e);
+        console.error("SAVE NOTE ERROR:", e);
 
-      if (e?.message) {
-        toast.error(e.message);
-      } else {
-        toast.error(JSON.stringify(e));
+        if (e?.message) {
+          toast.error(e.message);
+        } else {
+          toast.error(JSON.stringify(e));
+        }
+      } finally {
+        setSaving(false);
       }
-    } finally {
-      setSaving(false);
-    }
-  };
+    };
 
-  const del = async () => {
-    if (!deleteTarget) return;
+    const del = async () => {
+      if (!deleteTarget) return;
 
-    // Delete all notifications linked to this note
-    const { error: notifError } = await supabase
-      .from('notifications')
-      .delete()
-      .eq('note_id', deleteTarget.id);
+      // Delete all notifications linked to this note
+      const { error: notifError } = await supabase
+        .from('notifications')
+        .delete()
+        .eq('note_id', deleteTarget.id);
 
-    if (notifError) {
-      toast.error(notifError.message);
-      return;
-    }
+      if (notifError) {
+        toast.error(notifError.message);
+        return;
+      }
 
-    // Delete the note
-    const { error } = await supabase
-      .from('notes')
-      .delete()
-      .eq('id', deleteTarget.id);
+      // Delete the note
+      const { error } = await supabase
+        .from('notes')
+        .delete()
+        .eq('id', deleteTarget.id);
 
-    if (error) {
-      toast.error(error.message);
-      return;
-    }
+      if (error) {
+        toast.error(error.message);
+        return;
+      }
 
-    await logActivity('delete_note', `Deleted note: ${deleteTarget.title}`);
-    toast.success('Note deleted.');
+      await logActivity('delete_note', `Deleted note: ${deleteTarget.title}`);
+      toast.success('Note deleted.');
 
-    setDeleteTarget(null);
-    load();
-  };
+      setDeleteTarget(null);
+      load();
+    };
 
-  const togglePin = async (n: Note) => {
-    await supabase.from('notes').update({ pinned: !n.pinned }).eq('id', n.id);
-    load();
-  };
+    const togglePin = async (n: Note) => {
+      await supabase.from('notes').update({ pinned: !n.pinned }).eq('id', n.id);
+      load();
+    };
 
-  return (
-    <div className="space-y-6">
-      <PageHeader title="Notes" description="Announcements, maintenance notices, and system messages">
-        <Button onClick={() => { setEditing(null); setForm({ type: 'announcement', title: '', content: '', pinned: false }); setShowForm(true); }}>
-          <Plus className="h-4 w-4 mr-2" /> Add Note
-        </Button>
-      </PageHeader>
+    return (
+      <div className="space-y-6">
+        <PageHeader title="Notes" description="Announcements, maintenance notices, and system messages">
+          <Button onClick={() => { setEditing(null); setForm({ type: 'announcement', title: '', content: '', pinned: false }); setShowForm(true); }}>
+            <Plus className="h-4 w-4 mr-2" /> Add Note
+          </Button>
+        </PageHeader>
 
-      {showForm && (
-        <Card className="animate-slide-up">
-          <CardHeader><CardTitle className="text-lg">{editing ? 'Edit Note' : 'New Note'}</CardTitle></CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Type</Label>
-                <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm" value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value as NoteType })}>
-                  {Object.entries(TYPE_META).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
-                </select>
+        {showForm && (
+          <Card className="animate-slide-up">
+            <CardHeader><CardTitle className="text-lg">{editing ? 'Edit Note' : 'New Note'}</CardTitle></CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Type</Label>
+                  <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm" value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value as NoteType })}>
+                    {Object.entries(TYPE_META).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Title</Label>
+                  <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="Note title" />
+                </div>
               </div>
               <div className="space-y-2">
-                <Label>Title</Label>
-                <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="Note title" />
+                <Label>Content</Label>
+                <Textarea
+                  className="min-h-24"
+                  value={form.content}
+                  onChange={(e) => setForm({ ...form, content: e.target.value })}
+                  placeholder="Write your note content here..."
+                />
               </div>
-            </div>
-            <div className="space-y-2">
-              <Label>Content</Label>
-              <Textarea min-h-24 className="min-h-24" value={form.content} onChange={(e) => setForm({ ...form, content: e.target.value })} placeholder="Write your note content here..." />
-            </div>
-            <label className="flex items-center gap-2 text-sm">
-              <input type="checkbox" checked={form.pinned} onChange={(e) => setForm({ ...form, pinned: e.target.checked })} className="rounded" />
-              Pin this note
-            </label>
-            <div className="flex gap-2 justify-end">
-              <Button variant="outline" onClick={() => { setShowForm(false); setEditing(null); }}>Cancel</Button>
-              <Button onClick={save} disabled={saving}>{saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />} {editing ? 'Update' : 'Create'}</Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+              <label className="flex items-center gap-2 text-sm">
+                <input type="checkbox" checked={form.pinned} onChange={(e) => setForm({ ...form, pinned: e.target.checked })} className="rounded" />
+                Pin this note
+              </label>
+              <div className="flex gap-2 justify-end">
+                <Button variant="outline" onClick={() => { setShowForm(false); setEditing(null); }}>Cancel</Button>
+                <Button onClick={save} disabled={saving}>{saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />} {editing ? 'Update' : 'Create'}</Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
-      {loading ? (
-        <div className="flex items-center justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
-      ) : notes.length === 0 ? (
-        <Card><CardContent><EmptyState icon={StickyNote} title="No notes yet" description="Create announcements, maintenance notices, or holiday messages." /></CardContent></Card>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {notes.map((n) => {
-            const meta = TYPE_META[n.type];
-            return (
-              <Card key={n.id} className={cn('animate-slide-up', n.pinned && 'ring-2 ring-primary/30')}>
-                <CardContent className="p-4">
-                  <div className="flex items-start gap-3">
-                    <div className={cn('h-10 w-10 rounded-lg flex items-center justify-center shrink-0', meta.color)}>
-                      <meta.icon className="h-5 w-5" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h3 className="font-semibold">{n.title}</h3>
-                        {n.pinned && <Pin className="h-3.5 w-3.5 text-primary" />}
+        {loading ? (
+          <div className="flex items-center justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
+        ) : notes.length === 0 ? (
+          <Card><CardContent><EmptyState icon={StickyNote} title="No notes yet" description="Create announcements, maintenance notices, or holiday messages." /></CardContent></Card>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {notes.map((n) => {
+              const meta = TYPE_META[n.type];
+              return (
+                <Card key={n.id} className={cn('animate-slide-up', n.pinned && 'ring-2 ring-primary/30')}>
+                  <CardContent className="p-4">
+                    <div className="flex items-start gap-3">
+                      <div className={cn('h-10 w-10 rounded-lg flex items-center justify-center shrink-0', meta.color)}>
+                        <meta.icon className="h-5 w-5" />
                       </div>
-                      <p className="text-xs text-muted-foreground mb-2">{meta.label} &middot; {formatDateTime(n.created_at)}</p>
-                      <p className="text-sm text-muted-foreground whitespace-pre-wrap">{n.content}</p>
-                      <div className="flex gap-1 mt-3">
-                        <button onClick={() => togglePin(n)} className={cn('p-1.5 rounded-md hover:bg-accent', n.pinned && 'text-primary')} title="Toggle pin"><Pin className="h-3.5 w-3.5" /></button>
-                        <button onClick={() => { setEditing(n); setForm({ type: n.type, title: n.title, content: n.content, pinned: n.pinned }); setShowForm(true); }} className="p-1.5 rounded-md hover:bg-accent" title="Edit"><Pencil className="h-3.5 w-3.5" /></button>
-                        <button onClick={() => setDeleteTarget(n)} className="p-1.5 rounded-md hover:bg-rose-100 dark:hover:bg-rose-900/40 text-rose-600 dark:text-rose-400" title="Delete"><Trash2 className="h-3.5 w-3.5" /></button>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h3 className="font-semibold">{n.title}</h3>
+                          {n.pinned && <Pin className="h-3.5 w-3.5 text-primary" />}
+                        </div>
+                        <p className="text-xs text-muted-foreground mb-2">{meta.label} &middot; {formatDateTime(n.created_at)}</p>
+                        <p className="text-sm text-muted-foreground whitespace-pre-wrap">{n.content}</p>
+                        <div className="flex gap-1 mt-3">
+                          <button onClick={() => togglePin(n)} className={cn('p-1.5 rounded-md hover:bg-accent', n.pinned && 'text-primary')} title="Toggle pin"><Pin className="h-3.5 w-3.5" /></button>
+                          <button onClick={() => { setEditing(n); setForm({ type: n.type, title: n.title, content: n.content, pinned: n.pinned }); setShowForm(true); }} className="p-1.5 rounded-md hover:bg-accent" title="Edit"><Pencil className="h-3.5 w-3.5" /></button>
+                          <button onClick={() => setDeleteTarget(n)} className="p-1.5 rounded-md hover:bg-rose-100 dark:hover:bg-rose-900/40 text-rose-600 dark:text-rose-400" title="Delete"><Trash2 className="h-3.5 w-3.5" /></button>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
-      )}
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        )}
 
-      <ConfirmDialog open={!!deleteTarget} title="Delete Note" description={`Delete "${deleteTarget?.title}"? This cannot be undone.`} onConfirm={del} onCancel={() => setDeleteTarget(null)} confirmLabel="Delete" destructive />
-    </div>
-  );
-}
+        <ConfirmDialog open={!!deleteTarget} title="Delete Note" description={`Delete "${deleteTarget?.title}"? This cannot be undone.`} onConfirm={del} onCancel={() => setDeleteTarget(null)} confirmLabel="Delete" destructive />
+      </div>
+    );
+  }
