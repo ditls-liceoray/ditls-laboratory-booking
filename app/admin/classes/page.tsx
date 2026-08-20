@@ -107,7 +107,7 @@ export default function ViewClassesPage() {
         td { padding: 8px; border-bottom: 1px solid #ddd; }
         td:first-child { font-weight: bold; width: 40%; color: #555; }
       </style></head><body>
-      <h1>Computer Laboratory Booking System</h1>
+      <h1>Computer and Robotics Laboratory Booking System</h1>
       <p>Booking Slip</p>
       <p class="ref">${b.reference_no}</p>
       <table>

@@ -6,8 +6,8 @@ import { Code, Github, Mail, Globe, Cpu, Database, Layers, Server, GraduationCap
 
 export default function DeveloperPage() {
   const info = [
-    { icon: Code, label: 'Developer Name', value: 'Mr. Raymund Luceño' },
-    { icon: Layers, label: 'Project Name', value: 'DITLS Computer Laboratory Booking System' },
+    { icon: Code, label: 'Developer Name', value: 'Webdev Raymund Luceño' },
+    { icon: Layers, label: 'Project Name', value: 'DITLS Computer and Robotics Laboratory Booking System' },
     { icon: Cpu, label: 'System Version', value: 'v1.0.0' },
     { icon: Code, label: 'Programming Language', value: 'TypeScript / JavaScript' },
     { icon: Globe, label: 'Framework', value: 'Next.js (React) + Tailwind CSS + ShadCN UI' },
@@ -72,7 +72,7 @@ export default function DeveloperPage() {
       <Card>
         <CardContent className="p-6 text-center">
           <p className="text-sm text-muted-foreground">
-            &copy; {new Date().getFullYear()} Computer Laboratory Booking System. All rights reserved.
+            &copy; {new Date().getFullYear()} Computer and Robotics Laboratory Booking System. All rights reserved.
           </p>
           <p className="text-xs text-muted-foreground mt-1">
             Built with React, TypeScript, Tailwind CSS, ShadCN UI, and Supabase.

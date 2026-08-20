@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, FormEvent } from 'react';
+import { useEffect, useState, FormEvent, useRef } from 'react';
 import { supabase } from '@/lib/supabase/client';
 import { useAuth } from '@/lib/auth-context';
 import { logActivity, fullName } from '@/lib/api';
@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Loader2, Save, User, Mail, Phone, Lock, Image as ImageIcon } from 'lucide-react';
+import { Loader2, Save, Mail, Phone, Lock, Image as ImageIcon } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function ProfilePage() {
@@ -18,6 +18,8 @@ export default function ProfilePage() {
   const [pwd, setPwd] = useState({ current: '', next: '', confirm: '' });
   const [saving, setSaving] = useState(false);
   const [changingPwd, setChangingPwd] = useState(false);
+  const [uploadingPicture, setUploadingPicture] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (teacher) {
@@ -64,6 +66,78 @@ export default function ProfilePage() {
     }
   };
 
+    const uploadProfilePicture = async (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = e.target.files?.[0];
+
+    if (!file || !teacher) return;
+
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please select a valid image file.');
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Profile picture must be 5MB or smaller.');
+      return;
+    }
+
+    setUploadingPicture(true);
+
+    try {
+      const fileExt = file.name.split('.').pop()?.toLowerCase() || 'jpg';
+      const filePath = `${teacher.id}/profile-${Date.now()}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('teacher-profiles')
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: true,
+          contentType: file.type,
+        });
+
+      if (uploadError) throw uploadError;
+
+      const { data } = supabase.storage
+        .from('teacher-profiles')
+        .getPublicUrl(filePath);
+
+      const imageUrl = data.publicUrl;
+
+      const { error: updateError } = await supabase
+        .from('teachers')
+        .update({
+          profile_picture: imageUrl,
+        })
+        .eq('id', teacher.id);
+
+      if (updateError) throw updateError;
+
+      setForm((prev) => ({
+        ...prev,
+        profile_picture: imageUrl,
+      }));
+
+      await refreshProfile();
+
+      toast.success('Profile picture updated successfully.');
+    } catch (e: unknown) {
+      console.error('Profile picture upload error:', e);
+      toast.error(
+        e instanceof Error
+          ? e.message
+          : 'Failed to upload profile picture.'
+      );
+    } finally {
+      setUploadingPicture(false);
+
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
   if (!teacher) {
     return <div className="flex items-center justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
   }
@@ -79,7 +153,7 @@ export default function ProfilePage() {
       <Card>
         <CardContent className="p-6">
           <div className="flex flex-col sm:flex-row items-center gap-6">
-            <Avatar className="h-24 w-24">
+            {/* <Avatar className="h-24 w-24">
               {form.profile_picture ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={form.profile_picture} alt="Profile" className="h-full w-full object-cover rounded-full" />
@@ -88,7 +162,53 @@ export default function ProfilePage() {
                   {teacher.first_name[0]}{teacher.last_name[0]}
                 </AvatarFallback>
               )}
-            </Avatar>
+            </Avatar> */}
+
+          <div className="flex flex-col items-center gap-3">
+  <Avatar className="h-24 w-24">
+    {form.profile_picture ? (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={form.profile_picture}
+        alt="Profile"
+        className="h-full w-full object-cover rounded-full"
+      />
+    ) : (
+      <AvatarFallback className="bg-primary/10 text-primary text-3xl">
+        {teacher.first_name[0]}
+        {teacher.last_name[0]}
+      </AvatarFallback>
+    )}
+  </Avatar>
+
+  <input
+    ref={fileInputRef}
+    type="file"
+    accept="image/*"
+    onChange={uploadProfilePicture}
+    className="hidden"
+  />
+
+  <Button
+    type="button"
+    variant="outline"
+    size="sm"
+    disabled={uploadingPicture}
+    onClick={() => fileInputRef.current?.click()}
+  >
+    {uploadingPicture ? (
+      <>
+        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+        Uploading...
+      </>
+    ) : (
+      <>
+        <ImageIcon className="h-4 w-4 mr-2" />
+        Change Picture
+      </>
+    )}
+  </Button>
+</div>
             <div>
               <h2 className="text-xl font-bold">{fullName(teacher)}</h2>
               <p className="text-sm text-muted-foreground">{teacher.position} &middot; {teacher.department}</p>
@@ -130,13 +250,13 @@ export default function ProfilePage() {
                   <Input className="pl-10" value={form.contact_number} onChange={(e) => setForm({ ...form, contact_number: e.target.value })} />
                 </div>
               </div>
-              <div className="space-y-2 md:col-span-2">
+              {/* <div className="space-y-2 md:col-span-2">
                 <Label>Profile Picture URL</Label>
                 <div className="relative">
                   <ImageIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input className="pl-10" value={form.profile_picture} onChange={(e) => setForm({ ...form, profile_picture: e.target.value })} placeholder="https://..." />
                 </div>
-              </div>
+              </div> */}
             </div>
             <div className="flex justify-end">
               <Button type="submit" disabled={saving}>

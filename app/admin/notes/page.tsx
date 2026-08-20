@@ -91,7 +91,7 @@ export default function NotesPage() {
         // Get all teachers
         const { data: teachers, error: teacherError } = await supabase
           .from('teachers')
-          .select('profile_id');
+          .select('profile_id, email');
 
         if (teacherError) throw teacherError;
 
@@ -110,6 +110,37 @@ export default function NotesPage() {
             .insert(notifications);
 
           if (notifError) throw notifError;
+
+          const emails =
+            teachers
+              ?.map((teacher) => teacher.email)
+              .filter((email) => email) || [];
+          console.log("Teachers:", teachers);
+          console.log("Emails:", emails);
+
+          if (emails.length > 0) {
+            const response = await fetch("/api/send-announcement", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                emails: ["rluceno@liceo.edu.ph"],
+                title: form.title,
+                message: form.content,
+              }),
+            });
+
+            const result = await response.json();
+            console.log("Resend response:", result);
+
+            if (!response.ok) {
+              console.error("Email Error:", result);
+              toast.error("Failed to send email notifications.");
+            } else {
+              console.log("Email sent:", result);
+            }
+          }
         }
 
         await logActivity('create_note', `Created note: ${form.title}`);

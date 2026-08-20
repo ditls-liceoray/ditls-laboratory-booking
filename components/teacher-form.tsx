@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, FormEvent, useEffect } from 'react';
+import { useState, FormEvent, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase/client';
 import { logActivity, fullName } from '@/lib/api';
@@ -19,6 +19,8 @@ export default function TeacherForm({ teacher }: { teacher?: Teacher }) {
   const router = useRouter();
   const isEdit = !!teacher;
   const [loading, setLoading] = useState(false);
+  const [uploadingPicture, setUploadingPicture] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [form, setForm] = useState({
     first_name: '',
     middle_name: '',
@@ -76,6 +78,77 @@ export default function TeacherForm({ teacher }: { teacher?: Teacher }) {
     setErrors(e);
     return Object.keys(e).length === 0;
   };
+
+  const handleProfilePictureUpload = async (
+  event: React.ChangeEvent<HTMLInputElement>
+) => {
+  const file = event.target.files?.[0];
+
+  if (!file) return;
+
+  // Validate file type
+  if (!file.type.startsWith('image/')) {
+    toast.error('Please select an image file.');
+    return;
+  }
+
+  // Maximum 5MB
+  if (file.size > 5 * 1024 * 1024) {
+    toast.error('Image must be 5MB or smaller.');
+    return;
+  }
+
+  setUploadingPicture(true);
+
+  try {
+    const fileExt = file.name.split('.').pop()?.toLowerCase() || 'jpg';
+    const fileName = `${crypto.randomUUID()}.${fileExt}`;
+    const filePath = `teachers/${fileName}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from('teacher-profiles')
+      .upload(filePath, file, {
+        cacheControl: '3600',
+        upsert: false,
+        contentType: file.type,
+      });
+
+    if (uploadError) {
+      throw uploadError;
+    }
+
+    const { data } = supabase.storage
+      .from('teacher-profiles')
+      .getPublicUrl(filePath);
+
+    if (!data.publicUrl) {
+      throw new Error('Unable to generate image URL.');
+    }
+
+    setForm((prev) => ({
+      ...prev,
+      profile_picture: data.publicUrl,
+    }));
+
+    toast.success('Profile picture uploaded successfully.');
+  } catch (error) {
+    console.error('Profile picture upload error:', error);
+
+    const message =
+      error instanceof Error
+        ? error.message
+        : 'Failed to upload profile picture.';
+
+    toast.error(message);
+  } finally {
+    setUploadingPicture(false);
+
+    // Allows selecting the same file again
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  }
+};
 
   const handleSubmit = async (ev: FormEvent) => {
     ev.preventDefault();
@@ -181,7 +254,7 @@ export default function TeacherForm({ teacher }: { teacher?: Teacher }) {
         </div>
       </div>
 
-      <Card>
+      {/* <Card>
         <CardHeader>
           <CardTitle className="text-lg">Profile Picture</CardTitle>
           <CardDescription>Enter an image URL for the teacher&apos;s profile picture (optional)</CardDescription>
@@ -212,7 +285,75 @@ export default function TeacherForm({ teacher }: { teacher?: Teacher }) {
             </div>
           </div>
         </CardContent>
-      </Card>
+      </Card> */}
+
+      <Card>
+  <CardHeader>
+    <CardTitle className="text-lg">Profile Picture</CardTitle>
+    <CardDescription>
+      Upload a profile picture for this teacher.
+    </CardDescription>
+  </CardHeader>
+
+  <CardContent>
+    <div className="flex flex-col sm:flex-row items-center gap-6">
+      <Avatar className="h-24 w-24">
+        {form.profile_picture ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={form.profile_picture}
+            alt="Teacher profile"
+            className="h-full w-full object-cover rounded-full"
+          />
+        ) : (
+          <AvatarFallback className="bg-primary/10 text-primary text-2xl">
+            {(form.first_name[0] || '?') +
+              (form.last_name[0] || '')}
+          </AvatarFallback>
+        )}
+      </Avatar>
+
+      <div className="flex-1 space-y-3 text-center sm:text-left">
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/png,image/jpeg,image/jpg,image/webp"
+          className="hidden"
+          onChange={handleProfilePictureUpload}
+        />
+
+        <Button
+          type="button"
+          variant="outline"
+          disabled={uploadingPicture}
+          onClick={() => fileInputRef.current?.click()}
+        >
+          {uploadingPicture ? (
+            <>
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              Uploading...
+            </>
+          ) : (
+            <>
+              <ImageIcon className="h-4 w-4 mr-2" />
+              Choose Picture
+            </>
+          )}
+        </Button>
+
+        <p className="text-xs text-muted-foreground">
+          JPG, PNG, or WebP • Maximum 5MB
+        </p>
+
+        {form.profile_picture && (
+          <p className="text-xs text-green-600">
+            ✓ Profile picture uploaded
+          </p>
+        )}
+      </div>
+    </div>
+  </CardContent>
+</Card>
 
       <Card>
         <CardHeader>

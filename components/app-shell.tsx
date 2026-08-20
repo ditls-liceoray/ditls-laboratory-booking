@@ -9,7 +9,7 @@ import { supabase } from '@/lib/supabase/client';
 import { logActivity } from '@/lib/api';
 import type { Notification } from '@/lib/types';
 import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import Image from "next/image";
 import {
@@ -265,7 +265,20 @@ export default function AppShell({ children, role }: { children: React.ReactNode
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button className="flex items-center gap-2 p-1 rounded-lg hover:bg-accent transition-colors">
+                  {/* <Avatar className="h-8 w-8">
+                    <AvatarFallback className="bg-primary text-primary-foreground text-xs font-semibold">
+                      {initials}
+                    </AvatarFallback>
+                  </Avatar> */}
                   <Avatar className="h-8 w-8">
+                    {role === 'teacher' && teacher?.profile_picture && (
+                      <AvatarImage
+                        src={teacher.profile_picture}
+                        alt={displayName}
+                        className="object-cover"
+                      />
+                    )}
+
                     <AvatarFallback className="bg-primary text-primary-foreground text-xs font-semibold">
                       {initials}
                     </AvatarFallback>
