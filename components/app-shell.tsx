@@ -36,6 +36,14 @@ interface NavItem {
   badge?: string;
 }
 
+interface NavGroup {
+  id: 'teachers' | 'classes' | 'bookings' | 'system';
+  heading: string;
+  title: string;
+  icon: typeof LayoutDashboard;
+  children: NavItem[];
+}
+
 const adminNav: NavItem[] = [
   { label: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
   { label: 'Add Teacher', href: '/admin/teachers/add', icon: UserPlus },
@@ -49,6 +57,52 @@ const adminNav: NavItem[] = [
   { label: 'Notes', href: '/admin/notes', icon: StickyNote },
   { label: 'Developer', href: '/admin/developer', icon: Code },
   { label: 'System Settings', href: '/admin/settings', icon: Settings },
+];
+
+const adminGroups: NavGroup[] = [
+  {
+    id: 'teachers',
+    heading: 'Teachers',
+    title: 'TEACHERS',
+    icon: Users,
+    children: [
+      { label: 'Add Teacher', href: '/admin/teachers/add', icon: UserPlus },
+      { label: 'View Teachers', href: '/admin/teachers', icon: Users },
+    ],
+  },
+  {
+    id: 'classes',
+    heading: 'View Classes',
+    title: 'CLASSES',
+    icon: BookOpen,
+    children: [
+      { label: 'View Classes', href: '/admin/classes', icon: BookOpen },
+    ],
+  },
+  {
+    id: 'bookings',
+    heading: 'Bookings',
+    title: 'BOOKINGS',
+    icon: Calendar,
+    children: [
+      { label: 'View Appointments', href: '/admin/appointments', icon: CalendarCheck },
+      { label: 'Booking Calendar', href: '/admin/calendar', icon: Calendar },
+      { label: 'Approve Bookings', href: '/admin/appointments?status=pending', icon: CheckCircle },
+      { label: 'Rejected Bookings', href: '/admin/appointments?status=rejected', icon: XCircle },
+      { label: 'Completed Bookings', href: '/admin/appointments?status=completed', icon: CalendarCheck },
+    ],
+  },
+  {
+    id: 'system',
+    heading: 'System',
+    title: 'SYSTEM',
+    icon: Settings,
+    children: [
+      { label: 'Notes', href: '/admin/notes', icon: StickyNote },
+      { label: 'Developer', href: '/admin/developer', icon: Code },
+      { label: 'System Settings', href: '/admin/settings', icon: Settings },
+    ],
+  },
 ];
 
 const teacherNav: NavItem[] = [
@@ -74,6 +128,22 @@ export default function AppShell({ children, role }: { children: React.ReactNode
   const searchRef = useRef<HTMLInputElement>(null);
 
   const nav = role === 'admin' ? adminNav : teacherNav;
+  const defaultGroupState = () => ({
+    teachers: adminGroups[0].children.some((item) => pathname === item.href || (item.href !== '/admin/dashboard' && item.href !== '/teacher/dashboard' && pathname.startsWith(item.href.split('?')[0]))),
+    classes: adminGroups[1].children.some((item) => pathname === item.href || (item.href !== '/admin/dashboard' && item.href !== '/teacher/dashboard' && pathname.startsWith(item.href.split('?')[0]))),
+    bookings: adminGroups[2].children.some((item) => pathname === item.href || (item.href !== '/admin/dashboard' && item.href !== '/teacher/dashboard' && pathname.startsWith(item.href.split('?')[0]))),
+    system: adminGroups[3].children.some((item) => pathname === item.href || (item.href !== '/admin/dashboard' && item.href !== '/teacher/dashboard' && pathname.startsWith(item.href.split('?')[0]))),
+  });
+  const [expandedGroups, setExpandedGroups] = useState<Record<'teachers' | 'classes' | 'bookings' | 'system', boolean>>(defaultGroupState);
+
+  useEffect(() => {
+    setExpandedGroups((current) => ({
+      teachers: current.teachers || defaultGroupState().teachers,
+      classes: current.classes || defaultGroupState().classes,
+      bookings: current.bookings || defaultGroupState().bookings,
+      system: current.system || defaultGroupState().system,
+    }));
+  }, [pathname]);
 
   // Auth guard
   useEffect(() => {
@@ -165,19 +235,32 @@ export default function AppShell({ children, role }: { children: React.ReactNode
   return (
     <div className="min-h-screen bg-background flex">
       {/* Sidebar - desktop */}
-      <aside className="hidden lg:flex w-64 flex-col fixed inset-y-0 left-0 z-40 bg-[hsl(var(--sidebar))] text-[hsl(var(--sidebar-foreground))]">
-        <SidebarContent nav={nav} pathname={pathname} role={role} />
+      <aside className="hidden lg:flex w-64 flex-col fixed inset-y-0 left-0 z-40 bg-[hsl(var(--sidebar))] text-[hsl(var(--sidebar-foreground))] shadow-[inset_-1px_0_0_rgba(148,163,184,0.12)] backdrop-blur-sm">
+        <SidebarContent
+          nav={nav}
+          pathname={pathname}
+          role={role}
+          expandedGroups={expandedGroups}
+          setExpandedGroups={setExpandedGroups}
+        />
       </aside>
 
       {/* Sidebar - mobile drawer */}
       {sidebarOpen && (
         <div className="lg:hidden fixed inset-0 z-50">
-          <div className="absolute inset-0 bg-black/50 animate-fade-in" onClick={() => setSidebarOpen(false)} />
-          <aside className="absolute left-0 inset-y-0 w-64 bg-[hsl(var(--sidebar))] text-[hsl(var(--sidebar-foreground))] flex flex-col animate-slide-up">
-            <button onClick={() => setSidebarOpen(false)} className="absolute right-3 top-3 p-1 rounded hover:bg-white/10">
-              <X className="h-5 w-5" />
+          <div className="absolute inset-0 bg-slate-950/45 backdrop-blur-[2px] animate-fade-in" onClick={() => setSidebarOpen(false)} />
+          <aside className="absolute left-0 inset-y-0 w-64 bg-[hsl(var(--sidebar))] text-[hsl(var(--sidebar-foreground))] flex flex-col shadow-2xl animate-slide-up">
+            <button onClick={() => setSidebarOpen(false)} className="absolute right-3 top-3 p-1.5 rounded-full text-white/80 transition-colors duration-200 hover:bg-white/10 hover:text-white">
+              <X className="h-4 w-4" />
             </button>
-            <SidebarContent nav={nav} pathname={pathname} role={role} onNavigate={() => setSidebarOpen(false)} />
+            <SidebarContent
+              nav={nav}
+              pathname={pathname}
+              role={role}
+              onNavigate={() => setSidebarOpen(false)}
+              expandedGroups={expandedGroups}
+              setExpandedGroups={setExpandedGroups}
+            />
           </aside>
         </div>
       )}
@@ -213,12 +296,12 @@ export default function AppShell({ children, role }: { children: React.ReactNode
             <div className="relative">
               <button
                 onClick={() => setNotifOpen(!notifOpen)}
-                className="p-2 rounded-lg hover:bg-accent transition-colors relative"
+                className="p-2 rounded-lg hover:bg-accent transition-all duration-200 ease-out relative"
                 aria-label="Notifications"
               >
-                <Bell className="h-5 w-5" />
+                <Bell className="h-5 w-5 transition-transform duration-200 ease-out hover:scale-110" />
                 {unreadCount > 0 && (
-                  <span className="absolute top-1 right-1 h-4 min-w-4 px-1 rounded-full bg-rose-500 text-white text-[10px] font-bold flex items-center justify-center">
+                  <span className="absolute top-1 right-1 h-4 min-w-4 px-1 rounded-full bg-rose-500 text-white text-[10px] font-bold flex items-center justify-center shadow-sm">
                     {unreadCount > 9 ? '9+' : unreadCount}
                   </span>
                 )}
@@ -264,13 +347,8 @@ export default function AppShell({ children, role }: { children: React.ReactNode
             {/* User menu */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="flex items-center gap-2 p-1 rounded-lg hover:bg-accent transition-colors">
-                  {/* <Avatar className="h-8 w-8">
-                    <AvatarFallback className="bg-primary text-primary-foreground text-xs font-semibold">
-                      {initials}
-                    </AvatarFallback>
-                  </Avatar> */}
-                  <Avatar className="h-8 w-8">
+                <button className="group flex items-center gap-2 rounded-lg p-1.5 transition-all duration-200 ease-out hover:bg-accent/80">
+                  <Avatar className="h-8 w-8 ring-2 ring-transparent transition-shadow duration-200 ease-out group-hover:ring-primary/10">
                     {role === 'teacher' && teacher?.profile_picture && (
                       <AvatarImage
                         src={teacher.profile_picture}
@@ -283,8 +361,8 @@ export default function AppShell({ children, role }: { children: React.ReactNode
                       {initials}
                     </AvatarFallback>
                   </Avatar>
-                  <span className="hidden sm:block text-sm font-medium">{displayName}</span>
-                  <ChevronDown className="h-4 w-4 text-muted-foreground hidden sm:block" />
+                  <span className="hidden sm:block text-sm font-medium transition-opacity duration-200 ease-out">{displayName}</span>
+                  <ChevronDown className="hidden h-4 w-4 text-muted-foreground transition-transform duration-200 ease-out sm:block group-data-[state=open]:rotate-180" />
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
@@ -316,7 +394,7 @@ export default function AppShell({ children, role }: { children: React.ReactNode
 
         {/* Footer */}
         <footer className="border-t px-6 py-4 text-center text-xs text-muted-foreground">
-          Computer Laboratory Booking System v1.0.0 &middot; &copy; {new Date().getFullYear()} Liceo De Cagayan University. All rights reserved.
+          Computer and Robotics Laboratory Booking System v1.0.0 &middot; &copy; {new Date().getFullYear()} Liceo De Cagayan University. All rights reserved.
         </footer>
       </div>
 
@@ -344,53 +422,147 @@ export default function AppShell({ children, role }: { children: React.ReactNode
   );
 }
 
-function SidebarContent({ nav, pathname, role, onNavigate }: { nav: NavItem[]; pathname: string; role: string; onNavigate?: () => void }) {
+function SidebarContent({
+  nav,
+  pathname,
+  role,
+  onNavigate,
+  expandedGroups,
+  setExpandedGroups,
+}: {
+  nav: NavItem[];
+  pathname: string;
+  role: string;
+  onNavigate?: () => void;
+  expandedGroups?: Record<'teachers' | 'classes' | 'bookings' | 'system', boolean>;
+  setExpandedGroups?: React.Dispatch<React.SetStateAction<Record<'teachers' | 'classes' | 'bookings' | 'system', boolean>>>;
+}) {
+  const isPathActive = (href: string) => pathname === href || (href !== '/admin/dashboard' && href !== '/teacher/dashboard' && pathname.startsWith(href.split('?')[0]));
+
+  const renderNavItem = (item: NavItem, nested = false) => {
+    const active = isPathActive(item.href);
+
+    return (
+      <Link
+        key={item.label}
+        href={item.href}
+        onClick={onNavigate}
+        className={cn(
+          'group relative mb-1 flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 ease-out',
+          nested ? 'ml-2 pl-6' : '',
+          active
+            ? 'bg-white/12 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_10px_24px_rgba(15,23,42,0.18)]'
+            : 'text-white/72 hover:bg-white/8 hover:text-white',
+        )}
+      >
+        <span className={cn(
+          'absolute inset-y-1 left-1 w-0.5 rounded-full bg-white/80 transition-all duration-200 ease-out',
+          active ? 'opacity-100' : 'opacity-0 group-hover:opacity-50',
+        )} />
+        <item.icon className={cn('relative z-10 h-4 w-4 shrink-0 transition-all duration-200 ease-out', active ? 'translate-x-0.5 scale-110' : 'group-hover:translate-x-0.5 group-hover:scale-110')} />
+        <span className="relative z-10 truncate">{item.label}</span>
+        {item.badge && <Badge className="relative z-10 ml-auto border border-white/10 bg-white/10 text-white shadow-none">{item.badge}</Badge>}
+      </Link>
+    );
+  };
+
   return (
     <>
-      <div className="h-16 flex items-center gap-3 px-6 border-b border-white/10">
-        <div className="h-10 w-10 flex items-center justify-center">
+      <div className="h-16 flex items-center gap-3 px-5 border-b border-white/10 bg-white/[0.03]">
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/5 ring-1 ring-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
           <Image
             src="/images/Ldcu_seal.png"
             alt="Liceo Logo"
-            width={40}
-            height={40}
+            width={32}
+            height={32}
             className="object-contain"
             priority
           />
         </div>
 
         <div>
-          <p className="font-bold text-sm leading-tight">DITLS</p>
-          <p className="text-[10px] text-white/60 capitalize">
+          <p className="text-sm font-bold leading-tight tracking-[0.12em] text-white/95">DITLS</p>
+          <p className="text-[10px] capitalize text-white/60">
             {role} Panel
           </p>
         </div>
       </div>
-      <nav className="flex-1 overflow-y-auto py-4 px-3 scrollbar-thin">
-        {nav.map((item) => {
-          const active = pathname === item.href || (item.href !== '/admin/dashboard' && item.href !== '/teacher/dashboard' && pathname.startsWith(item.href.split('?')[0]));
-          return (
-            <Link
-              key={item.label}
-              href={item.href}
-              onClick={onNavigate}
-              className={cn(
-                'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all mb-0.5',
-                active
-                  ? 'bg-white/15 text-white'
-                  : 'text-white/70 hover:bg-white/10 hover:text-white',
-              )}
-            >
-              <item.icon className="h-4 w-4 shrink-0" />
-              <span className="truncate">{item.label}</span>
-              {item.badge && <Badge className="ml-auto bg-white/20 text-white">{item.badge}</Badge>}
-            </Link>
-          );
-        })}
+      <nav className="flex-1 overflow-y-auto px-3 py-4 scrollbar-thin">
+        {role === 'admin' ? (
+          <>
+            <div className="px-1 pb-2">
+              {renderNavItem({ label: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard })}
+            </div>
+
+            {adminGroups.map((group) => {
+              const open = expandedGroups?.[group.id] ?? true;
+              const groupActive = group.children.some((item) => isPathActive(item.href));
+
+              if (group.id === 'classes') {
+                return (
+                  <div key={group.id} className="mb-2 px-1">
+                    <p className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-white/45">{group.title}</p>
+                    <div className="space-y-1">
+                      <button
+                        type="button"
+                        onClick={() => setExpandedGroups?.((prev) => ({ ...prev, [group.id]: !prev[group.id] }))}
+                        className={cn(
+                          'group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium transition-all duration-200 ease-out',
+                          groupActive ? 'bg-white/8 text-white' : 'text-white/75 hover:bg-white/8 hover:text-white',
+                        )}
+                      >
+                        <group.icon className={cn('h-4 w-4 shrink-0 transition-all duration-200 ease-out', groupActive ? 'text-white' : 'text-white/80 group-hover:translate-x-0.5 group-hover:scale-110')} />
+                        <span className="flex-1 truncate">{group.heading}</span>
+                        <ChevronDown className={cn('h-4 w-4 shrink-0 transition-transform duration-200 ease-out', open ? 'rotate-180' : 'rotate-0')} />
+                      </button>
+
+                      <div className={cn('grid transition-all duration-200 ease-out', open ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0')}>
+                        <div className="overflow-hidden">
+                          <div className="pt-1.5 pl-2">
+                            {group.children.map((child) => renderNavItem(child, true))}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              }
+
+              return (
+                <div key={group.id} className="mb-2 px-1">
+                  <p className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-white/45">{group.title}</p>
+                  <button
+                    type="button"
+                    onClick={() => setExpandedGroups?.((prev) => ({ ...prev, [group.id]: !prev[group.id] }))}
+                    className={cn(
+                      'group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium transition-all duration-200 ease-out',
+                      groupActive ? 'bg-white/8 text-white' : 'text-white/75 hover:bg-white/8 hover:text-white',
+                    )}
+                  >
+                    <group.icon className={cn('h-4 w-4 shrink-0 transition-all duration-200 ease-out', groupActive ? 'text-white' : 'text-white/80 group-hover:translate-x-0.5 group-hover:scale-110')} />
+                    <span className="flex-1 truncate">{group.heading}</span>
+                    <ChevronDown className={cn('h-4 w-4 shrink-0 transition-transform duration-200 ease-out', open ? 'rotate-180' : 'rotate-0')} />
+                  </button>
+
+                  <div className={cn('grid transition-all duration-200 ease-out', open ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0')}>
+                    <div className="overflow-hidden">
+                      <div className="pt-1.5 pl-2">
+                        {group.children.map((child) => renderNavItem(child, true))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </>
+        ) : (
+          nav.map((item) => renderNavItem(item))
+        )}
       </nav>
-      <div className="p-4 border-t border-white/10">
-        <div className="text-xs text-white/50 text-center">
-          System Status: <span className="text-emerald-400 font-medium">Online</span>
+      <div className="border-t border-white/10 p-4">
+        <div className="flex items-center justify-center gap-2 rounded-full border border-emerald-400/20 bg-emerald-500/10 px-3 py-2 text-xs text-emerald-300 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">
+          <span className="relative h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_0_4px_rgba(52,211,153,0.15)]" />
+          System Status
         </div>
       </div>
     </>

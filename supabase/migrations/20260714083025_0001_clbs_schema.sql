@@ -461,9 +461,9 @@ WHERE NOT EXISTS (SELECT 1 FROM public.laboratories);
 -- =========================================================
 INSERT INTO public.settings (key, value)
 SELECT * FROM (VALUES
-  ('system_name', 'Computer Laboratory Booking System'),
+  ('system_name', 'Computer And Robotics Laboratory Booking System'),
   ('system_version', '1.0.0'),
   ('university', 'State University'),
-  ('session_timeout_minutes', '60')
+  ('session_timeout_minutes', '80')
 ) AS t(key, value)
 WHERE NOT EXISTS (SELECT 1 FROM public.settings);

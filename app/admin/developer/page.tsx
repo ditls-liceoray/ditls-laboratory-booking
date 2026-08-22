@@ -46,7 +46,7 @@ export default function DeveloperPage() {
             <div className="flex items-start gap-3">
               <Info className="h-5 w-5 text-primary shrink-0 mt-0.5" />
               <p className="text-sm text-muted-foreground">
-                The Computer Laboratory Booking System (CLBS) is a modern, responsive web application designed to streamline laboratory reservations in university environments. It provides role-based access for administrators and teachers, real-time conflict detection, calendar management, and comprehensive booking tracking.
+                The Computer and Robotics Laboratory Booking System (CRLBS) is a modern, responsive web application designed to streamline laboratory reservations in university environments. It provides role-based access for administrators and teachers, real-time conflict detection, calendar management, and comprehensive booking tracking.
               </p>
             </div>
             <div className="space-y-2 pt-2">

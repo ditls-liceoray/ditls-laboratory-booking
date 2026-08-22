@@ -10,7 +10,7 @@ const inter = Inter({ subsets: ['latin'] });
 export const metadata: Metadata = {
   title: "DITLS — Computer & Robotics Laboratory Booking System",
   description:
-    "A modern, responsive Computer Laboratory Booking System for universities.",
+    "A modern, responsive Computer and Robotics Laboratory Booking System for universities.",
 
   icons: {
     icon: "/images/Ldcu_seal.png",
