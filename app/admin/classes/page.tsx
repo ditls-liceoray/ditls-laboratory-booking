@@ -1,11 +1,12 @@
 'use client';
 
-import { useEffect, useState, useMemo, useCallback } from 'react';
+import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase/client';
 import { fetchTeachers, fullName, formatTime, formatDate } from '@/lib/api';
+import { printBooking as printBookingUtil } from '@/lib/print';
 import type { Booking, Teacher } from '@/lib/types';
-import { PageHeader, EmptyState, Pagination, StatusBadge, ConfirmDialog, TableSkeleton } from '@/components/shared';
+import { PageHeader, EmptyState, Pagination, StatusBadge, ConfirmDialog, TableSkeleton, ActionConfirmDialog } from '@/components/shared';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
@@ -34,6 +35,8 @@ export default function ViewClassesPage() {
   const [actionTarget, setActionTarget] = useState<{ booking: Booking; action: string } | null>(null);
   const [acting, setActing] = useState(false);
   const [adminNotes, setAdminNotes] = useState('');
+  const [actionDialogOpen, setActionDialogOpen] = useState(false);
+  const isActingRef = useRef(false);
   const pageSize = 8;
 
   const load = useCallback(async () => {
@@ -80,72 +83,61 @@ export default function ViewClassesPage() {
   const paged = filtered.slice((page - 1) * pageSize, page * pageSize);
 
   const handleAction = async () => {
-    if (!actionTarget) return;
+    if (!actionTarget || isActingRef.current) return;
+    isActingRef.current = true;
     setActing(true);
-    const statusMap: Record<string, 'approved' | 'rejected' | 'completed' | 'cancelled'> = {
-      approve: 'approved', reject: 'rejected', complete: 'completed', cancel: 'cancelled',
-    };
-    const status = statusMap[actionTarget.action];
-    const ok = await updateBookingStatus(actionTarget.booking, status, adminNotes || undefined);
-    if (ok) {
-      setActionTarget(null);
-      setAdminNotes('');
-      load();
+    try {
+      const statusMap: Record<string, 'approved' | 'rejected' | 'completed' | 'cancelled'> = {
+        approve: 'approved', reject: 'rejected', complete: 'completed', cancel: 'cancelled',
+      };
+      const status = statusMap[actionTarget.action];
+      const ok = await updateBookingStatus(actionTarget.booking, status, adminNotes || undefined);
+      if (ok) {
+        setActionTarget(null);
+        setAdminNotes('');
+        setActionDialogOpen(false);
+        load();
+      }
+    } finally {
+      setActing(false);
+      isActingRef.current = false;
     }
-    setActing(false);
   };
 
-  const printBooking = (b: Booking) => {
-    const w = window.open('', '_blank');
-    if (!w) return;
-    w.document.write(`
-      <html><head><title>Booking Slip - ${b.reference_no}</title>
-      <style>
-        body { font-family: Arial, sans-serif; padding: 40px; max-width: 600px; margin: auto; }
-        h1 { color: #2563eb; } .ref { font-size: 24px; font-weight: bold; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        td { padding: 8px; border-bottom: 1px solid #ddd; }
-        td:first-child { font-weight: bold; width: 40%; color: #555; }
-      </style></head><body>
-      <h1>Computer and Robotics Laboratory Booking System</h1>
-      <p>Booking Slip</p>
-      <p class="ref">${b.reference_no}</p>
-      <table>
-        <tr><td>Teacher</td><td>${b.teacher ? fullName(b.teacher) : '—'}</td></tr>
-        <tr><td>Class Name</td><td>${b.class_name}</td></tr>
-        <tr><td>Subject</td><td>${b.subject}</td></tr>
-        <tr><td>Laboratory</td><td>${b.laboratory?.name || '—'}</td></tr>
-        <tr><td>Date</td><td>${formatDate(b.booking_date)}</td></tr>
-        <tr><td>Time</td><td>${formatTime(b.start_time)} - ${formatTime(b.end_time)}</td></tr>
-        <tr><td>Purpose</td><td>${b.purpose}</td></tr>
-        <tr><td>Expected Students</td><td>${b.expected_students}</td></tr>
-        <tr><td>Status</td><td>${b.status}</td></tr>
-        <tr><td>Remarks</td><td>${b.remarks || '—'}</td></tr>
-      </table>
-      <p style="margin-top:40px;color:#999;font-size:12px;">Printed on ${new Date().toLocaleString()}</p>
-      </body></html>
-    `);
-    w.document.close();
-    w.print();
+  const openActionDialog = (booking: Booking, action: string) => {
+    setActionTarget({ booking, action });
+    setAdminNotes('');
+    setActionDialogOpen(true);
   };
 
-  return (
-    <div className="space-y-6">
+  const handlePrint = (b: Booking) => {
+    printBookingUtil(b, {
+      title: 'Computer and Robotics Laboratory Booking System',
+      includeTeacher: true,
+      includePurpose: true,
+      includeExpectedStudents: true,
+      includeRemarks: true,
+      includePrintDate: true,
+    });
+  };
+
+return (
+    <main id="main-content" className="container-responsive space-y-6" role="main">
       <PageHeader title="View Classes" description="All laboratory bookings across the system" />
 
       <Card>
         <CardContent className="p-4 space-y-4">
-          <div className="flex flex-col lg:flex-row gap-3">
+          <div className="flex flex-col sm:flex-row gap-3">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Search by class, subject, reference, teacher, or lab..."
-                className="pl-10"
+                className="pl-10 input-responsive"
                 value={search}
                 onChange={(e) => { setSearch(e.target.value); setPage(1); }}
               />
             </div>
-            <select className="flex h-10 rounded-md border border-input bg-background px-3 text-sm" value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}>
+            <select className="flex h-10 w-full sm:w-auto rounded-md border border-input bg-background px-3 text-sm input-responsive" value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}>
               <option value="all">All Status</option>
               <option value="pending">Pending</option>
               <option value="approved">Approved</option>
@@ -153,11 +145,11 @@ export default function ViewClassesPage() {
               <option value="completed">Completed</option>
               <option value="cancelled">Cancelled</option>
             </select>
-            <select className="flex h-10 rounded-md border border-input bg-background px-3 text-sm" value={teacherFilter} onChange={(e) => { setTeacherFilter(e.target.value); setPage(1); }}>
+            <select className="flex h-10 w-full sm:w-auto rounded-md border border-input bg-background px-3 text-sm input-responsive" value={teacherFilter} onChange={(e) => { setTeacherFilter(e.target.value); setPage(1); }}>
               <option value="all">All Teachers</option>
               {teachers.map((t) => <option key={t.id} value={t.id}>{fullName(t)}</option>)}
             </select>
-            <Input type="date" className="lg:w-44" value={dateFilter} onChange={(e) => { setDateFilter(e.target.value); setPage(1); }} />
+            <Input type="date" className="w-full sm:w-auto lg:w-44 input-responsive" value={dateFilter} onChange={(e) => { setDateFilter(e.target.value); setPage(1); }} />
           </div>
 
           {loading ? (
@@ -166,7 +158,7 @@ export default function ViewClassesPage() {
             <EmptyState icon={BookOpen} title="No classes found" description="Try adjusting your filters or wait for teachers to submit bookings." />
           ) : (
             <>
-              <div className="rounded-lg border overflow-x-auto">
+              <div className="table-responsive">
                 <Table>
                   <TableHeader>
                     <TableRow className="bg-muted/50">
@@ -174,7 +166,7 @@ export default function ViewClassesPage() {
                       <TableHead>Class / Subject</TableHead>
                       <TableHead>Teacher</TableHead>
                       <TableHead>Laboratory</TableHead>
-                      <TableHead>Date &amp; Time</TableHead>
+                      <TableHead>Date & Time</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
@@ -196,26 +188,16 @@ export default function ViewClassesPage() {
                         <TableCell><StatusBadge status={b.status} /></TableCell>
                         <TableCell>
                           <div className="flex items-center justify-end gap-1">
-                            <button onClick={() => setSelected(b)} className="p-1.5 rounded-md hover:bg-blue-100 dark:hover:bg-blue-900/40 text-blue-600 dark:text-blue-400" title="View Details">
-                              <Eye className="h-4 w-4" />
-                            </button>
-                            <button onClick={() => printBooking(b)} className="p-1.5 rounded-md hover:bg-accent" title="Print">
-                              <Printer className="h-4 w-4" />
-                            </button>
+                            <button onClick={() => setSelected(b)} className="p-1.5 rounded-md hover:bg-blue-100 dark:hover:bg-blue-900/40 text-blue-600 dark:text-blue-400 touch-target" aria-label="View details"><Eye className="h-4 w-4" /></button>
+                            <button onClick={() => handlePrint(b)} className="p-1.5 rounded-md hover:bg-accent touch-target" aria-label="Print"><Printer className="h-4 w-4" /></button>
                             {b.status === 'pending' && (
                               <>
-                                <button onClick={() => setActionTarget({ booking: b, action: 'approve' })} className="p-1.5 rounded-md hover:bg-emerald-100 dark:hover:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400" title="Approve">
-                                  <CheckCircle className="h-4 w-4" />
-                                </button>
-                                <button onClick={() => setActionTarget({ booking: b, action: 'reject' })} className="p-1.5 rounded-md hover:bg-rose-100 dark:hover:bg-rose-900/40 text-rose-600 dark:text-rose-400" title="Reject">
-                                  <XCircle className="h-4 w-4" />
-                                </button>
+                                <button onClick={() => openActionDialog(b, 'approve')} className="p-1.5 rounded-md hover:bg-emerald-100 dark:hover:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400 touch-target" aria-label="Approve"><CheckCircle className="h-4 w-4" /></button>
+                                <button onClick={() => openActionDialog(b, 'reject')} className="p-1.5 rounded-md hover:bg-rose-100 dark:hover:bg-rose-900/40 text-rose-600 dark:text-rose-400 touch-target" aria-label="Reject"><XCircle className="h-4 w-4" /></button>
                               </>
                             )}
                             {b.status === 'approved' && (
-                              <button onClick={() => setActionTarget({ booking: b, action: 'complete' })} className="p-1.5 rounded-md hover:bg-blue-100 dark:hover:bg-blue-900/40 text-blue-600 dark:text-blue-400" title="Mark Completed">
-                                <CalendarCheck className="h-4 w-4" />
-                              </button>
+                              <button onClick={() => openActionDialog(b, 'complete')} className="p-1.5 rounded-md hover:bg-primary-100 dark:hover:bg-primary-900/40 text-primary-600 dark:text-primary-400 touch-target" aria-label="Mark completed"><CalendarCheck className="h-4 w-4" /></button>
                             )}
                           </div>
                         </TableCell>
@@ -232,34 +214,19 @@ export default function ViewClassesPage() {
 
       {selected && <BookingDetails booking={selected} onClose={() => setSelected(null)} />}
 
-      {/* Action confirmation with notes */}
-      {actionTarget && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 animate-fade-in" onClick={() => setActionTarget(null)}>
-          <div className="bg-background rounded-lg p-6 max-w-md w-full mx-4 animate-scale-in" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-lg font-semibold mb-2 capitalize">{actionTarget.action} Booking</h3>
-            <p className="text-sm text-muted-foreground mb-4">
-              Are you sure you want to {actionTarget.action} booking <span className="font-mono font-semibold">{actionTarget.booking.reference_no}</span>?
-            </p>
-            <textarea
-              className="w-full min-h-20 rounded-md border border-input bg-background p-3 text-sm mb-4"
-              placeholder="Add admin notes (optional)..."
-              value={adminNotes}
-              onChange={(e) => setAdminNotes(e.target.value)}
-            />
-            <div className="flex gap-2 justify-end">
-              <Button variant="outline" onClick={() => { setActionTarget(null); setAdminNotes(''); }}>Cancel</Button>
-              <Button
-                variant={actionTarget.action === 'reject' || actionTarget.action === 'cancel' ? 'destructive' : 'default'}
-                onClick={handleAction}
-                disabled={acting}
-              >
-                {acting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                {actionTarget.action === 'approve' ? 'Approve' : actionTarget.action === 'reject' ? 'Reject' : actionTarget.action === 'complete' ? 'Mark Completed' : 'Cancel Booking'}
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
+      <ActionConfirmDialog
+        open={actionDialogOpen}
+        title={`${actionTarget?.action} Booking`}
+        description={`Are you sure you want to ${actionTarget?.action} booking <span className="font-mono font-semibold">{actionTarget?.booking.reference_no}</span>?`}
+        onConfirm={handleAction}
+        onCancel={() => { setActionTarget(null); setAdminNotes(''); setActionDialogOpen(false); }}
+        confirmLabel={actionTarget?.action === 'approve' ? 'Approve' : actionTarget?.action === 'reject' ? 'Reject' : actionTarget?.action === 'complete' ? 'Mark Completed' : 'Cancel Booking'}
+        destructive={actionTarget?.action === 'reject' || actionTarget?.action === 'cancel'}
+        showNotes
+        notesValue={adminNotes}
+        onNotesChange={(v) => setAdminNotes(v)}
+        loading={acting}
+      />
+    </main>
   );
 }

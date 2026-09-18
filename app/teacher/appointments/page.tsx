@@ -1,10 +1,11 @@
 'use client';
 
-import { useEffect, useState, useMemo, useCallback } from 'react';
+import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase/client';
 import { useAuth } from '@/lib/auth-context';
 import { fetchTeacherBookings, fullName, formatTime, formatDate, logActivity } from '@/lib/api';
+import { printBooking as printBookingUtil } from '@/lib/print';
 import type { Booking, BookingStatus } from '@/lib/types';
 import { PageHeader, EmptyState, Pagination, StatusBadge, ConfirmDialog, TableSkeleton } from '@/components/shared';
 import { Button } from '@/components/ui/button';
@@ -14,7 +15,7 @@ import {
   Table, TableHeader, TableBody, TableHead, TableRow, TableCell,
 } from '@/components/ui/table';
 import { BookingDetails, updateBookingStatus } from '@/components/booking-actions';
-import { Search, Eye, Printer, XCircle, Loader2, CalendarCheck, Download } from 'lucide-react';
+import { Search, Eye, Printer, XCircle, Loader2, CalendarCheck, Download, Calendar } from 'lucide-react';
 import { toast } from 'sonner';
 
 const TABS: { key: string; label: string }[] = [
@@ -33,10 +34,13 @@ export default function MyAppointmentsPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState(params.get('q') || '');
   const [tab, setTab] = useState('all');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
   const [page, setPage] = useState(1);
   const [selected, setSelected] = useState<Booking | null>(null);
   const [cancelTarget, setCancelTarget] = useState<Booking | null>(null);
   const [cancelling, setCancelling] = useState(false);
+  const isCancellingRef = useRef(false);
   const pageSize = 8;
 
   const load = useCallback(async () => {
@@ -56,7 +60,6 @@ export default function MyAppointmentsPage() {
 
   const filtered = useMemo(() => {
     let result = [...bookings];
-    if (tab !== 'all') result = result.filter((b) => b.status === tab);
     if (search) {
       const q = search.toLowerCase();
       result = result.filter((b) =>
@@ -66,18 +69,26 @@ export default function MyAppointmentsPage() {
         (b.laboratory && b.laboratory.name.toLowerCase().includes(q))
       );
     }
+    if (tab !== 'all') result = result.filter((b) => b.status === tab);
+    if (dateFrom) result = result.filter((b) => b.booking_date >= dateFrom);
+    if (dateTo) result = result.filter((b) => b.booking_date <= dateTo);
     return result;
-  }, [bookings, tab, search]);
+  }, [bookings, tab, search, dateFrom, dateTo]);
 
   const totalPages = Math.ceil(filtered.length / pageSize);
   const paged = filtered.slice((page - 1) * pageSize, page * pageSize);
 
   const handleCancel = async () => {
-    if (!cancelTarget) return;
+    if (!cancelTarget || isCancellingRef.current) return;
+    isCancellingRef.current = true;
     setCancelling(true);
-    const ok = await updateBookingStatus(cancelTarget, 'cancelled');
-    if (ok) { setCancelTarget(null); load(); }
-    setCancelling(false);
+    try {
+      const ok = await updateBookingStatus(cancelTarget, 'cancelled');
+      if (ok) { setCancelTarget(null); load(); }
+    } finally {
+      setCancelling(false);
+      isCancellingRef.current = false;
+    }
   };
 
   const printBooking = (b: Booking) => {
@@ -110,23 +121,34 @@ export default function MyAppointmentsPage() {
     toast.success('Exported to CSV.');
   };
 
-  return (
-    <div className="space-y-6">
-      <PageHeader title="My Appointments" description="View and manage your laboratory bookings">
-        <Button variant="outline" onClick={exportCSV}><Download className="h-4 w-4 mr-2" /> Export</Button>
-      </PageHeader>
+  const handlePrint = (b: Booking) => {
+    printBookingUtil(b, {
+      title: 'Computer and Robotics Booking Slip',
+      includeTeacher: true,
+      includePurpose: true,
+    });
+  };
 
-      <div className="flex gap-1 overflow-x-auto scrollbar-thin pb-1">
-        {TABS.map((t) => (
-          <button key={t.key} onClick={() => { setTab(t.key); setPage(1); }} className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${tab === t.key ? 'bg-primary text-primary-foreground' : 'hover:bg-accent'}`}>{t.label}</button>
-        ))}
-      </div>
+return (
+    <main id="main-content" className="container-responsive space-y-6" role="main">
+      <PageHeader title="My Appointments" description="View and manage your laboratory bookings">
+        <Button variant="outline" onClick={exportCSV} className="btn-responsive"><Download className="h-4 w-4 mr-2" /> Export</Button>
+      </PageHeader>
 
       <Card>
         <CardContent className="p-4 space-y-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input placeholder="Search your appointments..." className="pl-10" value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} />
+          <div className="flex flex-col sm:flex-row gap-3">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input placeholder="Search your appointments..." className="pl-10 input-responsive" value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} />
+            </div>
+            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+              <Input type="date" className="w-full sm:w-44 input-responsive" value={dateFrom} onChange={(e) => { setDateFrom(e.target.value); setPage(1); }} placeholder="From" />
+              <Input type="date" className="w-full sm:w-44 input-responsive" value={dateTo} onChange={(e) => { setDateTo(e.target.value); setPage(1); }} placeholder="To" />
+              <select className="flex h-10 w-full sm:w-auto rounded-md border border-input bg-background px-3 text-sm input-responsive" value={tab} onChange={(e) => { setTab(e.target.value); setPage(1); }}>
+                {TABS.map((t) => <option key={t.key} value={t.key}>{t.label}</option>)}
+              </select>
+            </div>
           </div>
 
           {loading ? (
@@ -135,14 +157,14 @@ export default function MyAppointmentsPage() {
             <EmptyState icon={CalendarCheck} title="No appointments" description="You haven't made any bookings yet. Search for a laboratory to get started." />
           ) : (
             <>
-              <div className="rounded-lg border overflow-x-auto">
+              <div className="table-responsive">
                 <Table>
                   <TableHeader>
                     <TableRow className="bg-muted/50">
                       <TableHead>Reference</TableHead>
                       <TableHead>Class / Subject</TableHead>
                       <TableHead>Laboratory</TableHead>
-                      <TableHead>Date &amp; Time</TableHead>
+                      <TableHead>Date & Time</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
@@ -157,10 +179,10 @@ export default function MyAppointmentsPage() {
                         <TableCell><StatusBadge status={b.status} /></TableCell>
                         <TableCell>
                           <div className="flex items-center justify-end gap-1">
-                            <button onClick={() => setSelected(b)} className="p-1.5 rounded-md hover:bg-blue-100 dark:hover:bg-blue-900/40 text-blue-600 dark:text-blue-400" title="View"><Eye className="h-4 w-4" /></button>
-                            <button onClick={() => printBooking(b)} className="p-1.5 rounded-md hover:bg-accent" title="Print"><Printer className="h-4 w-4" /></button>
+                            <button onClick={() => setSelected(b)} className="p-1.5 rounded-md hover:bg-blue-100 dark:hover:bg-blue-900/40 text-blue-600 dark:text-blue-400 touch-target" aria-label="View booking details"><Eye className="h-4 w-4" /></button>
+                            <button onClick={() => handlePrint(b)} className="p-1.5 rounded-md hover:bg-accent touch-target" aria-label="Print booking slip"><Printer className="h-4 w-4" /></button>
                             {b.status === 'pending' && (
-                              <button onClick={() => setCancelTarget(b)} className="p-1.5 rounded-md hover:bg-rose-100 dark:hover:bg-rose-900/40 text-rose-600 dark:text-rose-400" title="Cancel Booking"><XCircle className="h-4 w-4" /></button>
+                              <button onClick={() => setCancelTarget(b)} className="p-1.5 rounded-md hover:bg-rose-100 dark:hover:bg-rose-900/40 text-rose-600 dark:text-rose-400 touch-target" aria-label="Cancel booking"><XCircle className="h-4 w-4" /></button>
                             )}
                           </div>
                         </TableCell>
@@ -177,6 +199,6 @@ export default function MyAppointmentsPage() {
 
       {selected && <BookingDetails booking={selected} onClose={() => setSelected(null)} />}
       <ConfirmDialog open={!!cancelTarget} title="Cancel Booking" description={`Cancel booking ${cancelTarget?.reference_no}? This cannot be undone.`} onConfirm={handleCancel} onCancel={() => setCancelTarget(null)} confirmLabel={cancelling ? 'Cancelling...' : 'Cancel Booking'} destructive />
-    </div>
+    </main>
   );
 }

@@ -1,18 +1,5 @@
 export const DEPARTMENTS: string[] = [
-  /* 'Computer Science',
-  'Information Technology',
-  'Computer Engineering',
-  'Mathematics',
-  'Physics',
-  'Chemistry',
-  'Biology',
-  'English',
-  'Filipino',
-  'Social Studies', */
-
-   "Department of Integrated Technology and Library Services"
-
-
+  "Department of Integrated Technology and Library Services"
 ];
 
 export const POSITIONS: string[] = [
@@ -34,7 +21,7 @@ export const COURSES: string[] = [
   'Science, Technology, Engineering, and Mathematics',
 ];
 
-export const YEAR_LEVELS: string[] = ['Grade 11', 'Grade 12', /*'3rd Year', '4th Year', '5th Year'*/];
+export const YEAR_LEVELS: string[] = ['Grade 11', 'Grade 12'];
 
 export const EQUIPMENT_OPTIONS: string[] = [
   'Projector',

@@ -8,7 +8,7 @@ export default function DeveloperPage() {
   const info = [
     { icon: Code, label: 'Developer Name', value: 'Webdev Raymund Luceño' },
     { icon: Layers, label: 'Project Name', value: 'DITLS Computer and Robotics Laboratory Booking System' },
-    { icon: Cpu, label: 'System Version', value: 'v1.0.0' },
+    { icon: Cpu, label: 'System Version', value: 'v2.0.0' },
     { icon: Code, label: 'Programming Language', value: 'TypeScript / JavaScript' },
     { icon: Globe, label: 'Framework', value: 'Next.js (React) + Tailwind CSS + ShadCN UI' },
     { icon: Database, label: 'Database', value: 'Supabase (PostgreSQL)' },

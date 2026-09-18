@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2, Save, Settings as SettingsIcon } from 'lucide-react';
+import { Loader2, Save, Settings as SettingsIcon, Clock, Sun, Moon, Timer, Info } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function SettingsPage() {
@@ -75,6 +75,39 @@ export default function SettingsPage() {
             <div className="space-y-2">
               <Label>Session Timeout (minutes)</Label>
               <Input type="number" value={settings.session_timeout_minutes || '60'} onChange={(e) => setSettings({ ...settings, session_timeout_minutes: e.target.value })} />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader><CardTitle className="text-lg flex items-center gap-2"><Clock className="h-5 w-5" /> Booking Policy</CardTitle></CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Minimum Booking Duration (minutes)</Label>
+              <Input type="number" min={5} max={120} value={settings.min_booking_duration_minutes || '30'} onChange={(e) => setSettings({ ...settings, min_booking_duration_minutes: e.target.value })} />
+              <p className="text-xs text-muted-foreground">Minimum allowed duration for a booking. Users cannot book slots shorter than this.</p>
+            </div>
+            <div className="space-y-2">
+              <Label>Maximum Booking Duration (hours)</Label>
+              <Input type="number" min={1} max={24} value={settings.max_booking_duration_hours || '4'} onChange={(e) => setSettings({ ...settings, max_booking_duration_hours: e.target.value })} />
+              <p className="text-xs text-muted-foreground">Maximum allowed duration for a single booking. Longer bookings will be rejected.</p>
+            </div>
+            <div className="space-y-2">
+              <Label>Booking Start Hour</Label>
+              <Input type="time" value={settings.booking_start_hour || '07:00'} onChange={(e) => setSettings({ ...settings, booking_start_hour: e.target.value })} />
+              <p className="text-xs text-muted-foreground">Earliest time a booking can start. Bookings before this time will be rejected.</p>
+            </div>
+            <div className="space-y-2">
+              <Label>Booking End Hour</Label>
+              <Input type="time" value={settings.booking_end_hour || '22:00'} onChange={(e) => setSettings({ ...settings, booking_end_hour: e.target.value })} />
+              <p className="text-xs text-muted-foreground">Latest time a booking can end. Bookings ending after this time will be rejected.</p>
+            </div>
+            <div className="space-y-2">
+              <Label>Time Slot Interval (minutes)</Label>
+              <Input type="number" min={5} max={60} value={settings.time_slot_interval_minutes || '30'} onChange={(e) => setSettings({ ...settings, time_slot_interval_minutes: e.target.value })} />
+              <p className="text-xs text-muted-foreground">Granularity of time slots in the booking form. Users can only select start/end times at this interval.</p>
             </div>
           </div>
         </CardContent>

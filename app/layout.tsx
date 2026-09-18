@@ -1,3 +1,4 @@
+// @ts-ignore - Next.js processes global CSS imports at build time.
 import './globals.css';
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
@@ -40,6 +41,9 @@ export default function RootLayout({
         />
       </head>
       <body className={inter.className} suppressHydrationWarning>
+        <a href="#main-content" className="skip-link">
+          Skip to main content
+        </a>
         <ThemeProvider>
           <AuthProvider>
             {children}

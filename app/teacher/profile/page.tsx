@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Loader2, Save, Mail, Phone, Lock, Image as ImageIcon } from 'lucide-react';
+import { Loader2, Save, Mail, Phone, Lock, Image as ImageIcon, User } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function ProfilePage() {
@@ -87,7 +87,7 @@ export default function ProfilePage() {
 
     try {
       const fileExt = file.name.split('.').pop()?.toLowerCase() || 'jpg';
-      const filePath = `${teacher.id}/profile-${Date.now()}.${fileExt}`;
+      const filePath = `${teacher.profile_id}/profile-${Date.now()}.${fileExt}`;
 
       const { error: uploadError } = await supabase.storage
         .from('teacher-profiles')
@@ -143,76 +143,92 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="space-y-6 max-w-4xl">
-      <div>
-        <h1 className="text-2xl font-bold">My Profile</h1>
-        <p className="text-muted-foreground text-sm mt-1">Manage your account information</p>
+    <main id="main-content" className="container-responsive space-y-6" role="main">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold text-balance">My Profile</h1>
+          <p className="text-muted-foreground text-sm mt-1">Manage your account information</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-muted-foreground">Teacher ID: </span>
+          <span className="text-sm font-mono font-medium">{teacher.teacher_id}</span>
+        </div>
       </div>
 
       {/* Profile header */}
       <Card>
-        <CardContent className="p-6">
+        <CardContent className="p-4 sm:p-6">
           <div className="flex flex-col sm:flex-row items-center gap-6">
-            {/* <Avatar className="h-24 w-24">
-              {form.profile_picture ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={form.profile_picture} alt="Profile" className="h-full w-full object-cover rounded-full" />
-              ) : (
-                <AvatarFallback className="bg-primary/10 text-primary text-3xl">
-                  {teacher.first_name[0]}{teacher.last_name[0]}
-                </AvatarFallback>
-              )}
-            </Avatar> */}
+            <div className="flex flex-col items-center gap-4 sm:items-start sm:flex-col sm:flex-1">
+              <Avatar className="h-28 w-28">
+                {form.profile_picture ? (
+                  <img
+                    src={form.profile_picture}
+                    alt="Profile"
+                    className="h-full w-full object-cover rounded-full"
+                  />
+                ) : (
+                  <AvatarFallback className="bg-primary/10 text-primary text-4xl">
+                    {teacher.first_name[0]}{teacher.last_name[0]}
+                  </AvatarFallback>
+                )}
+              </Avatar>
 
-          <div className="flex flex-col items-center gap-3">
-  <Avatar className="h-24 w-24">
-    {form.profile_picture ? (
-      // eslint-disable-next-line @next/next/no-img-element
-      <img
-        src={form.profile_picture}
-        alt="Profile"
-        className="h-full w-full object-cover rounded-full"
-      />
-    ) : (
-      <AvatarFallback className="bg-primary/10 text-primary text-3xl">
-        {teacher.first_name[0]}
-        {teacher.last_name[0]}
-      </AvatarFallback>
-    )}
-  </Avatar>
+              <div className="text-center sm:text-left">
+                <h2 className="text-2xl font-bold">{fullName(teacher)}</h2>
+                <p className="text-sm text-muted-foreground">{teacher.position} &middot; {teacher.department}</p>
+                <p className="text-xs text-muted-foreground font-mono mt-1">{teacher.teacher_id}</p>
+              </div>
 
-  <input
-    ref={fileInputRef}
-    type="file"
-    accept="image/*"
-    onChange={uploadProfilePicture}
-    className="hidden"
-  />
+              <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={uploadProfilePicture}
+                  className="hidden"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={uploadingPicture}
+                  onClick={() => fileInputRef.current?.click()}
+                  className="btn-responsive w-full sm:w-auto"
+                >
+                  {uploadingPicture ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Uploading...
+                    </>
+                  ) : (
+                    <>
+                      <ImageIcon className="h-4 w-4 mr-2" />
+                      Change Picture
+                    </>
+                  )}
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    if (confirm('Remove profile picture?')) {
+                      // Handle remove picture
+                    }
+                  }}
+                  className="btn-responsive w-full sm:w-auto"
+                >
+                  <ImageIcon className="h-4 w-4 mr-2" />
+                  Remove
+                </Button>
+              </div>
+            </div>
 
-  <Button
-    type="button"
-    variant="outline"
-    size="sm"
-    disabled={uploadingPicture}
-    onClick={() => fileInputRef.current?.click()}
-  >
-    {uploadingPicture ? (
-      <>
-        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-        Uploading...
-      </>
-    ) : (
-      <>
-        <ImageIcon className="h-4 w-4 mr-2" />
-        Change Picture
-      </>
-    )}
-  </Button>
-</div>
-            <div>
-              <h2 className="text-xl font-bold">{fullName(teacher)}</h2>
-              <p className="text-sm text-muted-foreground">{teacher.position} &middot; {teacher.department}</p>
-              <p className="text-xs text-muted-foreground font-mono mt-1">{teacher.teacher_id}</p>
+            <div className="flex-1">
+              <h2 className="text-xl font-bold sm:hidden">{fullName(teacher)}</h2>
+              <p className="text-sm text-muted-foreground sm:hidden">{teacher.position} &middot; {teacher.department}</p>
+              <p className="text-xs text-muted-foreground font-mono mt-1 sm:hidden">{teacher.teacher_id}</p>
             </div>
           </div>
         </CardContent>
@@ -224,30 +240,30 @@ export default function ProfilePage() {
           <CardTitle className="text-lg">Profile Information</CardTitle>
           <CardDescription>Update your contact details. Username cannot be changed.</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="card-responsive">
           <form onSubmit={saveProfile} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="form-grid">
               <div className="space-y-2">
                 <Label>Username</Label>
-                <Input value={user?.email?.replace('@clbs.local', '') || ''} disabled />
+                <Input value={user?.email?.replace('@clbs.local', '') || ''} disabled className="input-responsive" />
                 <p className="text-xs text-muted-foreground">Username cannot be changed.</p>
               </div>
               <div className="space-y-2">
                 <Label>Full Name</Label>
-                <Input value={fullName(teacher)} disabled />
+                <Input value={fullName(teacher)} disabled className="input-responsive" />
               </div>
               <div className="space-y-2">
                 <Label>Email Address</Label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input className="pl-10" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
+                  <Input className="pl-10 input-responsive" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
                 </div>
               </div>
               <div className="space-y-2">
                 <Label>Contact Number</Label>
                 <div className="relative">
                   <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input className="pl-10" value={form.contact_number} onChange={(e) => setForm({ ...form, contact_number: e.target.value })} />
+                  <Input className="pl-10 input-responsive" value={form.contact_number} onChange={(e) => setForm({ ...form, contact_number: e.target.value })} />
                 </div>
               </div>
               {/* <div className="space-y-2 md:col-span-2">
@@ -259,7 +275,7 @@ export default function ProfilePage() {
               </div> */}
             </div>
             <div className="flex justify-end">
-              <Button type="submit" disabled={saving}>
+              <Button type="submit" disabled={saving} className="btn-responsive">
                 {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
                 Save Changes
               </Button>
@@ -274,26 +290,26 @@ export default function ProfilePage() {
           <CardTitle className="text-lg">Change Password</CardTitle>
           <CardDescription>Set a new password for your account</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="card-responsive">
           <form onSubmit={changePassword} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="form-grid">
               <div className="space-y-2">
                 <Label>New Password</Label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input type="password" className="pl-10" value={pwd.next} onChange={(e) => setPwd({ ...pwd, next: e.target.value })} />
+                  <Input type="password" className="pl-10 input-responsive" value={pwd.next} onChange={(e) => setPwd({ ...pwd, next: e.target.value })} />
                 </div>
               </div>
               <div className="space-y-2">
                 <Label>Confirm Password</Label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input type="password" className="pl-10" value={pwd.confirm} onChange={(e) => setPwd({ ...pwd, confirm: e.target.value })} />
+                  <Input type="password" className="pl-10 input-responsive" value={pwd.confirm} onChange={(e) => setPwd({ ...pwd, confirm: e.target.value })} />
                 </div>
               </div>
             </div>
             <div className="flex justify-end">
-              <Button type="submit" disabled={changingPwd}>
+              <Button type="submit" disabled={changingPwd} className="btn-responsive">
                 {changingPwd ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Lock className="h-4 w-4 mr-2" />}
                 Change Password
               </Button>
@@ -301,6 +317,6 @@ export default function ProfilePage() {
           </form>
         </CardContent>
       </Card>
-    </div>
+    </main>
   );
 }

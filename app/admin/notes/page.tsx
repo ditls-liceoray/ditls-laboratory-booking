@@ -4,13 +4,13 @@ import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/lib/supabase/client';
 import { logActivity, formatDateTime } from '@/lib/api';
 import type { Note, NoteType } from '@/lib/types';
-import { PageHeader, EmptyState, ConfirmDialog } from '@/components/shared';
+import { PageHeader, EmptyState, ConfirmDialog, ContentDetailsModal } from '@/components/shared';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { StickyNote, Plus, Pin, Trash2, Pencil, Loader2, Megaphone, Wrench, CalendarOff, Info, Bell } from 'lucide-react';
+import { StickyNote, Plus, Pin, Trash2, Pencil, Loader2, Megaphone, Wrench, CalendarOff, Info, Bell, MoreHorizontal } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
@@ -30,6 +30,7 @@ export default function NotesPage() {
   const [form, setForm] = useState({ type: 'announcement' as NoteType, title: '', content: '', pinned: false });
   const [saving, setSaving] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Note | null>(null);
+  const [viewNote, setViewNote] = useState<Note | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -253,28 +254,81 @@ export default function NotesPage() {
         ) : notes.length === 0 ? (
           <Card><CardContent><EmptyState icon={StickyNote} title="No notes yet" description="Create announcements, maintenance notices, or holiday messages." /></CardContent></Card>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {notes.map((n) => {
               const meta = TYPE_META[n.type];
+              const contentPreview = n.content.length > 120 ? n.content.slice(0, 120) + '...' : n.content;
               return (
-                <Card key={n.id} className={cn('animate-slide-up', n.pinned && 'ring-2 ring-primary/30')}>
+                <Card
+                  key={n.id}
+                  className={cn('animate-slide-up', n.pinned && 'ring-2 ring-primary/30 relative', 'cursor-pointer hover:shadow-md transition-shadow')}
+                  onClick={(e) => {
+                    // Don't open modal if clicking on the dropdown menu or its children
+                    if (!(e.target as HTMLElement).closest('[role="menu"]') && !(e.target as HTMLElement).closest('.relative.group')) {
+                      setViewNote(n);
+                    }
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      setViewNote(n);
+                    }
+                  }}
+                  tabIndex={0}
+                  role="button"
+                  aria-label={`View details for ${n.title}`}
+                >
                   <CardContent className="p-4">
                     <div className="flex items-start gap-3">
                       <div className={cn('h-10 w-10 rounded-lg flex items-center justify-center shrink-0', meta.color)}>
                         <meta.icon className="h-5 w-5" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <h3 className="font-semibold">{n.title}</h3>
-                          {n.pinned && <Pin className="h-3.5 w-3.5 text-primary" />}
+                        <div className="flex items-start justify-between gap-2 mb-1">
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-semibold truncate">{n.title}</h3>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            {n.pinned && (
+                              <span title="Pinned" aria-label="Pinned">
+                                <Pin className="h-3.5 w-3.5 text-primary" />
+                              </span>
+                            )}
+                            <div className="relative group">
+                              <button
+                                className="p-1 rounded-md hover:bg-accent text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity"
+                                aria-label="More actions"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <MoreHorizontal className="h-3.5 w-3.5" />
+                              </button>
+                              <div className="absolute right-0 top-full mt-1 z-10 hidden group-hover:block">
+                                <div className="bg-white dark:bg-gray-800 rounded-md shadow-lg border py-1 min-w-[120px]">
+                                  <button
+                                    onClick={(e) => { e.stopPropagation(); togglePin(n); }}
+                                    className="w-full px-3 py-2 text-sm text-left text-muted-foreground hover:bg-accent flex items-center gap-2"
+                                  >
+                                    <Pin className="h-3.5 w-3.5" /> {n.pinned ? 'Unpin' : 'Pin'}
+                                  </button>
+                                  <button
+                                    onClick={(e) => { e.stopPropagation(); setEditing(n); setForm({ type: n.type, title: n.title, content: n.content, pinned: n.pinned }); setShowForm(true); }}
+                                    className="w-full px-3 py-2 text-sm text-left text-muted-foreground hover:bg-accent flex items-center gap-2"
+                                  >
+                                    <Pencil className="h-3.5 w-3.5" /> Edit
+                                  </button>
+                                  <button
+                                    onClick={(e) => { e.stopPropagation(); setDeleteTarget(n); }}
+                                    className="w-full px-3 py-2 text-sm text-left text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20 flex items-center gap-2"
+                                  >
+                                    <Trash2 className="h-3.5 w-3.5" /> Delete
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
                         </div>
-                        <p className="text-xs text-muted-foreground mb-2">{meta.label} &middot; {formatDateTime(n.created_at)}</p>
-                        <p className="text-sm text-muted-foreground whitespace-pre-wrap">{n.content}</p>
-                        <div className="flex gap-1 mt-3">
-                          <button onClick={() => togglePin(n)} className={cn('p-1.5 rounded-md hover:bg-accent', n.pinned && 'text-primary')} title="Toggle pin"><Pin className="h-3.5 w-3.5" /></button>
-                          <button onClick={() => { setEditing(n); setForm({ type: n.type, title: n.title, content: n.content, pinned: n.pinned }); setShowForm(true); }} className="p-1.5 rounded-md hover:bg-accent" title="Edit"><Pencil className="h-3.5 w-3.5" /></button>
-                          <button onClick={() => setDeleteTarget(n)} className="p-1.5 rounded-md hover:bg-rose-100 dark:hover:bg-rose-900/40 text-rose-600 dark:text-rose-400" title="Delete"><Trash2 className="h-3.5 w-3.5" /></button>
-                        </div>
+                        <p className="text-sm text-muted-foreground line-clamp-3">{contentPreview}</p>
+                        <p className="text-xs text-muted-foreground mt-2">{formatDateTime(n.created_at)}</p>
                       </div>
                     </div>
                   </CardContent>
@@ -285,6 +339,14 @@ export default function NotesPage() {
         )}
 
         <ConfirmDialog open={!!deleteTarget} title="Delete Note" description={`Delete "${deleteTarget?.title}"? This cannot be undone.`} onConfirm={del} onCancel={() => setDeleteTarget(null)} confirmLabel="Delete" destructive />
+
+        <ContentDetailsModal
+          open={!!viewNote}
+          title={viewNote?.title || ''}
+          content={viewNote?.content || ''}
+          date={viewNote ? formatDateTime(viewNote.created_at) : undefined}
+          onClose={() => setViewNote(null)}
+        />
       </div>
     );
   }

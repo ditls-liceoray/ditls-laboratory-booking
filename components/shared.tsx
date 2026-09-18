@@ -10,7 +10,11 @@ export function StatusBadge({ status, className }: { status: BookingStatus | str
     <span
       className={cn(
         'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold capitalize',
-        STATUS_COLORS[status] || 'bg-gray-100 text-gray-600',
+        status === 'pending' && 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',
+        status === 'approved' && 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300',
+        status === 'rejected' && 'bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300',
+        status === 'completed' && 'bg-primary-100 text-primary-700 dark:bg-primary-900/40 dark:text-primary-300',
+        status === 'cancelled' && 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400',
         className,
       )}
     >
@@ -18,7 +22,7 @@ export function StatusBadge({ status, className }: { status: BookingStatus | str
         'bg-amber-500': status === 'pending',
         'bg-emerald-500': status === 'approved',
         'bg-rose-500': status === 'rejected',
-        'bg-blue-500': status === 'completed',
+        'bg-primary-500': status === 'completed',
         'bg-gray-400': status === 'cancelled',
       })} />
       {status}
@@ -60,7 +64,7 @@ export function StatCard({ icon: Icon, label, value, color, trend }: { icon: Rea
           <p className="text-3xl font-bold mt-2">{value}</p>
           {trend && <p className="text-xs text-muted-foreground mt-1">{trend}</p>}
         </div>
-        <div className={cn('h-12 w-12 rounded-xl flex items-center justify-center', color)}>
+        <div className={cn('h-12 w-12 rounded-xl flex items-center justify-center', 'bg-primary-100 text-primary-600 dark:bg-primary-900/40 dark:text-primary-400')}>
           <Icon className="h-6 w-6" />
         </div>
       </div>
@@ -94,6 +98,72 @@ export function ConfirmDialog({ open, title, description, onConfirm, onCancel, c
               destructive ? 'bg-rose-600 hover:bg-rose-700' : 'bg-primary hover:bg-primary/90',
             )}
           >
+            {confirmLabel || 'Confirm'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export interface ActionConfirmDialogProps {
+  open: boolean;
+  title: string;
+  description: string;
+  onConfirm: () => void;
+  onCancel: () => void;
+  confirmLabel?: string;
+  destructive?: boolean;
+  showNotes?: boolean;
+  notesPlaceholder?: string;
+  notesValue?: string;
+  onNotesChange?: (value: string) => void;
+  loading?: boolean;
+}
+
+export function ActionConfirmDialog({
+  open,
+  title,
+  description,
+  onConfirm,
+  onCancel,
+  confirmLabel,
+  destructive,
+  showNotes = false,
+  notesPlaceholder = 'Admin notes (optional)...',
+  notesValue = '',
+  onNotesChange,
+  loading = false,
+}: ActionConfirmDialogProps) {
+  if (!open) return null;
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 animate-fade-in" onClick={onCancel}>
+      <div className="bg-background rounded-lg p-6 max-w-md w-full mx-4 animate-scale-in" onClick={(e) => e.stopPropagation()}>
+        <h3 className="text-lg font-semibold mb-2">{title}</h3>
+        <p className="text-sm text-muted-foreground mb-4">{description}</p>
+        {showNotes && (
+          <textarea
+            className="w-full min-h-20 rounded-md border border-input bg-background p-3 text-sm mb-4"
+            placeholder={notesPlaceholder}
+            value={notesValue}
+            onChange={(e) => onNotesChange?.(e.target.value)}
+            disabled={loading}
+          />
+        )}
+        <div className="flex gap-2 justify-end">
+          <button onClick={onCancel} className="px-4 h-9 rounded-md border bg-background hover:bg-accent text-sm font-medium transition-colors" disabled={loading}>
+            Cancel
+          </button>
+          <button
+            onClick={onConfirm}
+            className={cn(
+              'px-4 h-9 rounded-md text-sm font-medium text-white transition-colors',
+              destructive ? 'bg-rose-600 hover:bg-rose-700' : 'bg-primary hover:bg-primary/90',
+              loading && 'opacity-50 cursor-not-allowed',
+            )}
+            disabled={loading}
+          >
+            {loading && <span className="mr-2 h-4 w-4 animate-spin inline-block border-2 border-white border-t-transparent rounded-full" />}
             {confirmLabel || 'Confirm'}
           </button>
         </div>
@@ -154,6 +224,38 @@ export function Pagination({ page, totalPages, onPageChange }: { page: number; t
         >
           Next
         </button>
+      </div>
+    </div>
+  );
+}
+
+export interface ContentDetailsModalProps {
+  open: boolean;
+  title: string;
+  content: string;
+  onClose: () => void;
+  date?: string;
+}
+
+export function ContentDetailsModal({ open, title, content, onClose, date }: ContentDetailsModalProps) {
+  if (!open) return null;
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 animate-fade-in" onClick={onClose} role="dialog" aria-modal="true" aria-labelledby="content-details-title">
+      <div className="bg-background rounded-lg max-w-2xl w-full mx-4 max-h-[90vh] animate-scale-in" onClick={(e) => e.stopPropagation()}>
+        <div className="flex flex-col">
+          <div className="flex items-start justify-between p-4 border-b">
+            <div className="flex-1 min-w-0">
+              <h3 id="content-details-title" className="text-lg font-semibold truncate">{title}</h3>
+              {date && <p className="text-xs text-muted-foreground mt-0.5">{date}</p>}
+            </div>
+            <button onClick={onClose} className="p-1 rounded hover:bg-accent text-muted-foreground hover:text-foreground transition-colors" aria-label="Close">
+              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+          </div>
+          <div className="p-4 overflow-y-auto max-h-[60vh] whitespace-pre-wrap text-sm text-foreground">
+            {content}
+          </div>
+        </div>
       </div>
     </div>
   );

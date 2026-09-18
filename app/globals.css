@@ -4,61 +4,76 @@
 
 @layer base {
   :root {
-    --background: 210 40% 98%;
-    --foreground: 222 47% 11%;
+    /* Liceo de Cagayan University - Brand Colors */
+    /* Primary Maroon: #800000 -> hsl(0, 100%, 25%) */
+    /* Gold Accent: #F4C542 -> hsl(42, 89%, 61%) */
+    /* Light Maroon: #F5DADA -> hsl(0, 100%, 92%) */
+
+    --background: 0 0% 100%;
+    --foreground: 0 0% 13%;
     --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
+    --card-foreground: 0 0% 13%;
     --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
-    --primary: 217 91% 50%;
+    --popover-foreground: 0 0% 13%;
+
+    /* Liceo Primary Maroon: #800000 */
+    --primary: 0 100% 25%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 210 40% 96%;
-    --secondary-foreground: 222 47% 11%;
-    --muted: 210 40% 96%;
-    --muted-foreground: 215 16% 47%;
-    --accent: 210 40% 94%;
-    --accent-foreground: 222 47% 11%;
+
+    /* Light Maroon for subtle backgrounds */
+    --secondary: 0 100% 94%;
+    --secondary-foreground: 0 100% 15%;
+
+    --muted: 0 0% 96%;
+    --muted-foreground: 0 0% 40%;
+
+    /* Gold Accent: #F4C542 */
+    --accent: 42 89% 61%;
+    --accent-foreground: 0 0% 13%;
+
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 98%;
-    --border: 214 32% 91%;
-    --input: 214 32% 91%;
-    --ring: 217 91% 50%;
-    --chart-1: 217 91% 50%;
-    --chart-2: 173 58% 39%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
+    --border: 0 0% 88%;
+    --input: 0 0% 88%;
+    --ring: 0 100% 25%;
+    --chart-1: 0 100% 25%;
+    --chart-2: 42 89% 61%;
+    --chart-3: 142 70% 45%;
+    --chart-4: 142 70% 45%;
+    --chart-5: 0 84% 60%;
     --radius: 0.625rem;
-    --sidebar: 222 47% 11%;
-    --sidebar-foreground: 210 40% 98%;
+
+    /* Sidebar - Liceo Maroon */
+    --sidebar: 0 100% 20%;
+    --sidebar-foreground: 0 0% 98%;
   }
   .dark {
-    --background: 222 47% 7%;
-    --foreground: 210 40% 98%;
-    --card: 222 47% 10%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222 47% 10%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 217 91% 60%;
-    --primary-foreground: 222 47% 11%;
-    --secondary: 217 33% 17%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217 33% 17%;
-    --muted-foreground: 215 20% 65%;
-    --accent: 217 33% 17%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 63% 31%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217 33% 20%;
-    --input: 217 33% 20%;
-    --ring: 217 91% 60%;
-    --chart-1: 217 91% 60%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
-    --sidebar: 222 47% 5%;
-    --sidebar-foreground: 210 40% 98%;
+    --background: 0 0% 8%;
+    --foreground: 0 0% 98%;
+    --card: 0 0% 10%;
+    --card-foreground: 0 0% 98%;
+    --popover: 0 0% 10%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 0 100% 35%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 0 100% 15%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 0 0% 15%;
+    --muted-foreground: 0 0% 60%;
+    --accent: 42 89% 61%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 20%;
+    --input: 0 0% 20%;
+    --ring: 0 100% 35%;
+    --chart-1: 0 100% 35%;
+    --chart-2: 42 89% 61%;
+    --chart-3: 142 70% 45%;
+    --chart-4: 42 89% 61%;
+    --chart-5: 0 84% 60%;
+    --sidebar: 0 100% 15%;
+    --sidebar-foreground: 0 0% 98%;
   }
 }
 
@@ -69,6 +84,18 @@
   body {
     @apply bg-background text-foreground;
     font-feature-settings: 'rlig' 1, 'calt' 1;
+  }
+}
+
+@layer base {
+  :focus-visible {
+    @apply outline-none ring-2 ring-primary ring-offset-2 ring-offset-background;
+  }
+  .skip-link {
+    @apply absolute -top-10 left-4 z-50 px-4 py-2 bg-primary text-primary-foreground rounded-md transition-all;
+  }
+  .skip-link:focus {
+    @apply top-4;
   }
 }
 
@@ -100,6 +127,42 @@
   }
   .animate-scale-in {
     animation: scaleIn 0.18s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .touch-target {
+    @apply min-h-[48px] min-w-[48px];
+  }
+  .table-responsive {
+    @apply overflow-x-auto;
+  }
+  .table-responsive table {
+    @apply min-w-full;
+  }
+  .card-grid {
+    @apply grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4;
+  }
+  .form-grid {
+    @apply grid gap-4 sm:grid-cols-1 md:grid-cols-2;
+  }
+  .container-responsive {
+    @apply px-4 sm:px-6 lg:px-8;
+  }
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+@layer components {
+  .btn-responsive {
+    @apply touch-target px-4 py-2.5 sm:px-6 sm:py-3 text-sm sm:text-base;
+  }
+  .input-responsive {
+    @apply touch-target px-4 py-2.5 text-sm sm:text-base;
+  }
+  .badge-responsive {
+    @apply px-2.5 py-1 text-xs sm:px-3 sm:py-1.5;
+  }
+  .card-responsive {
+    @apply p-4 sm:p-6;
   }
 }
 

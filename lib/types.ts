@@ -71,6 +71,7 @@ export interface Notification {
   id: string;
   user_id: string;
   booking_id: string | null;
+  note_id: string | null;
   title: string;
   message: string;
   type: 'info' | 'success' | 'warning' | 'error';

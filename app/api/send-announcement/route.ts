@@ -1,4 +1,5 @@
 import nodemailer from "nodemailer";
+import { headers } from "next/headers";
 
 const transporter = nodemailer.createTransport({
   service: "gmail",
@@ -8,7 +9,64 @@ const transporter = nodemailer.createTransport({
   },
 });
 
+// Simple in-memory rate limiter (sliding window)
+interface RateLimitEntry {
+  count: number;
+  resetTime: number;
+}
+
+const rateLimitMap = new Map<string, RateLimitEntry>();
+
+function checkRateLimit(key: string, limit: number, windowMs: number): { allowed: boolean; remaining: number; resetTime: number } {
+  const now = Date.now();
+  const entry = rateLimitMap.get(key);
+
+  if (!entry || now > entry.resetTime) {
+    // First request or window expired
+    rateLimitMap.set(key, { count: 1, resetTime: now + windowMs });
+    return { allowed: true, remaining: limit - 1, resetTime: now + windowMs };
+  }
+
+  if (entry.count >= limit) {
+    return { allowed: false, remaining: 0, resetTime: entry.resetTime };
+  }
+
+  entry.count++;
+  return { allowed: true, remaining: limit - entry.count, resetTime: entry.resetTime };
+}
+
+function getClientIdentifier(request: Request): string {
+  // Try to get real IP from headers (for proxied environments)
+  const forwardedFor = request.headers.get("x-forwarded-for");
+  const realIp = request.headers.get("x-real-ip");
+  const ip = forwardedFor?.split(",")[0]?.trim() || realIp || "unknown";
+  return ip;
+}
+
 export async function POST(request: Request) {
+  // Rate limiting: 10 requests per minute per IP
+  const clientIp = getClientIdentifier(request);
+  const rateLimit = checkRateLimit(`send-announcement:${clientIp}`, 10, 60 * 1000);
+
+  if (!rateLimit.allowed) {
+    const retryAfter = Math.ceil((rateLimit.resetTime - Date.now()) / 1000);
+    return Response.json(
+      {
+        success: false,
+        error: "Too many requests. Please try again shortly.",
+      },
+      {
+        status: 429,
+        headers: {
+          "Retry-After": String(retryAfter),
+          "X-RateLimit-Limit": "10",
+          "X-RateLimit-Remaining": "0",
+          "X-RateLimit-Reset": String(Math.ceil(rateLimit.resetTime / 1000)),
+        },
+      }
+    );
+  }
+
   try {
     const { emails, title, message } = await request.json();
 
@@ -101,13 +159,22 @@ export async function POST(request: Request) {
     const successful = results.filter((r) => r.success).length;
     const failed = results.filter((r) => !r.success).length;
 
-    return Response.json({
-      success: failed === 0,
-      total: emails.length,
-      successful,
-      failed,
-      results,
-    });
+    return Response.json(
+      {
+        success: failed === 0,
+        total: emails.length,
+        successful,
+        failed,
+        results,
+      },
+      {
+        headers: {
+          "X-RateLimit-Limit": "10",
+          "X-RateLimit-Remaining": String(rateLimit.remaining),
+          "X-RateLimit-Reset": String(Math.ceil(rateLimit.resetTime / 1000)),
+        },
+      }
+    );
   } catch (error: any) {
     console.error("SEND ANNOUNCEMENT ERROR:", error);
 

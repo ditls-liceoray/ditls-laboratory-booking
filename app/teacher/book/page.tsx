@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, FormEvent } from 'react';
+import { useEffect, useState, FormEvent, useRef, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase/client';
 import { useAuth } from '@/lib/auth-context';
@@ -12,7 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import { Loader2, Save, X, RotateCcw, Calendar, Clock, Monitor, AlertTriangle } from 'lucide-react';
+import { Loader2, Save, X, RotateCcw, Calendar, Clock, Monitor, AlertTriangle, Info } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function BookLaboratoryPage() {
@@ -23,6 +23,13 @@ export default function BookLaboratoryPage() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [conflict, setConflict] = useState<string | null>(null);
+  const [settings, setSettings] = useState({
+    min_booking_duration_minutes: 30,
+    max_booking_duration_hours: 4,
+    booking_start_hour: '07:00',
+    booking_end_hour: '22:00',
+    time_slot_interval_minutes: 30,
+  });
 
   const [form, setForm] = useState({
     class_name: '', subject: '', course: COURSES[0], year_level: YEAR_LEVELS[0], section: '',
@@ -30,6 +37,26 @@ export default function BookLaboratoryPage() {
     expected_students: 30, equipment_needed: '', remarks: '',
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const conflictCheckId = useRef(0);
+  const isSubmittingRef = useRef(false);
+
+  // Fetch booking policy settings
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase.from('settings').select('key, value').in('key', [
+        'min_booking_duration_minutes',
+        'max_booking_duration_hours',
+        'booking_start_hour',
+        'booking_end_hour',
+        'time_slot_interval_minutes',
+      ]);
+      if (data) {
+        const s: Record<string, string> = {};
+        data.forEach((item) => { s[item.key] = item.value; });
+        setSettings((prev) => ({ ...prev, ...s }));
+      }
+    })();
+  }, []);
 
   useEffect(() => {
     (async () => {
@@ -46,26 +73,15 @@ export default function BookLaboratoryPage() {
     })();
   }, [params]);
 
-  // Check for conflicts on the fly
+  // Check for conflicts on the fly (with debounce and race condition protection)
   useEffect(() => {
     if (!form.laboratory_id || !form.booking_date || !form.start_time || !form.end_time) {
       setConflict(null);
       return;
     }
-    (async () => {
-      /* const { data } = await supabase
-        .from('bookings')
-        .select('reference_no, start_time, end_time')
-        .eq('laboratory_id', form.laboratory_id)
-        .eq('booking_date', form.booking_date)
-        .in('status', ['pending', 'approved'])
-        .lt('start_time', form.end_time)
-        .gt('end_time', form.start_time);
-      if (data && data.length > 0) {
-        setConflict(`Conflict detected: ${data.length} booking(s) already exist for this time slot.`);
-      } else {
-        setConflict(null);
-      } */
+    const currentCheckId = ++conflictCheckId.current;
+
+    const timer = setTimeout(async () => {
       const { data, error } = await supabase.rpc(
         'check_booking_conflict',
         {
@@ -76,9 +92,17 @@ export default function BookLaboratoryPage() {
         }
       );
 
+      // Ignore stale responses
+      if (currentCheckId !== conflictCheckId.current) return;
+
       if (error) {
-        console.error(error);
-        setConflict(null);
+        console.error('Booking conflict check error:', {
+          message: error.message,
+          code: error.code,
+          details: error.details,
+          hint: error.hint,
+        });
+        setConflict('Unable to verify laboratory availability. Please try again.');
         return;
       }
 
@@ -87,8 +111,8 @@ export default function BookLaboratoryPage() {
       } else {
         setConflict(null);
       }
-
-    })();
+    }, 300);
+    return () => clearTimeout(timer);
   }, [form.laboratory_id, form.booking_date, form.start_time, form.end_time]);
 
   const validate = () => {
@@ -101,6 +125,36 @@ export default function BookLaboratoryPage() {
     if (!form.start_time) e.start_time = 'Start time is required';
     if (!form.end_time) e.end_time = 'End time is required';
     if (form.start_time >= form.end_time) e.end_time = 'End time must be after start time';
+
+    // Duration validation
+    if (form.start_time && form.end_time) {
+      const start = new Date(`2000-01-01T${form.start_time}`);
+      const end = new Date(`2000-01-01T${form.end_time}`);
+      const diffMinutes = (end.getTime() - start.getTime()) / (1000 * 60);
+
+      const minDuration = settings.min_booking_duration_minutes;
+      const maxDuration = settings.max_booking_duration_hours * 60;
+
+      if (diffMinutes < minDuration) {
+        e.end_time = `Minimum booking duration is ${minDuration} minutes`;
+      }
+      if (diffMinutes > maxDuration) {
+        e.end_time = `Maximum booking duration is ${settings.max_booking_duration_hours} hours`;
+      }
+    }
+
+    // Booking hours validation
+    if (form.start_time && form.end_time) {
+      const startHour = parseInt(form.start_time.split(':')[0], 10);
+      const endHour = parseInt(form.end_time.split(':')[0], 10);
+      const bookingStart = parseInt(settings.booking_start_hour.split(':')[0], 10);
+      const bookingEnd = parseInt(settings.booking_end_hour.split(':')[0], 10);
+
+      if (startHour < bookingStart || endHour > bookingEnd) {
+        e.end_time = `Bookings only allowed between ${settings.booking_start_hour} and ${settings.booking_end_hour}`;
+      }
+    }
+
     if (form.expected_students < 1) e.expected_students = 'Must be at least 1';
     setErrors(e);
     return Object.keys(e).length === 0;
@@ -108,10 +162,12 @@ export default function BookLaboratoryPage() {
 
   const handleSubmit = async (ev: FormEvent) => {
     ev.preventDefault();
+    if (isSubmittingRef.current) return;
     if (!validate()) { toast.error('Please fix the errors.'); return; }
     if (conflict) { toast.error('Schedule conflict detected. Please choose a different time.'); return; }
     if (!teacher) { toast.error('Teacher profile not found.'); return; }
 
+    isSubmittingRef.current = true;
     setSubmitting(true);
     try {
       const { data, error } = await supabase
@@ -137,7 +193,23 @@ export default function BookLaboratoryPage() {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        // Handle database trigger conflict error
+        if (error.message.includes('Schedule conflict') || error.code === 'P0001') {
+          throw new Error('This laboratory is no longer available for the selected schedule. Another booking was created for this time.');
+        } else if (error.message.includes('Booking duration is below the minimum allowed')) {
+          throw new Error('Booking duration is below the minimum allowed. Please check the booking policy settings.');
+        } else if (error.message.includes('Booking duration exceeds the maximum allowed')) {
+          throw new Error('Booking duration exceeds the maximum allowed. Please check the booking policy settings.');
+        } else if (error.message.includes('Booking start time is before the allowed laboratory opening hour')) {
+          throw new Error('Booking start time is before the allowed laboratory opening hour. Please check the booking policy settings.');
+        } else if (error.message.includes('Booking end time is after the allowed laboratory closing hour')) {
+          throw new Error('Booking end time is after the allowed laboratory closing hour. Please check the booking policy settings.');
+        } else if (error.message.includes('Booking start time must align with the configured time slot interval') || error.message.includes('Booking end time must align with the configured time slot interval')) {
+          throw new Error('Booking time must align with the configured time slot interval. Please check the booking policy settings.');
+        }
+        throw error;
+      }
 
       // Notify admin
       const { data: admins } = await supabase.from('profiles').select('id').eq('role', 'admin');
@@ -161,11 +233,12 @@ export default function BookLaboratoryPage() {
       toast.error(msg);
     } finally {
       setSubmitting(false);
+      isSubmittingRef.current = false;
     }
   };
 
   const reset = () => {
-    setForm({ class_name: '', subject: '', course: COURSES[0], year_level: YEAR_LEVELS[0], section: '', laboratory_id: labs[0]?.id || '', purpose: '', description: '', booking_date: '', start_time: '08:00', end_time: '09:00', expected_students: 30, equipment_needed: '', remarks: '' });
+    setForm({ class_name: '', subject: '', course: COURSES[0], year_level: YEAR_LEVELS[0], section: '', laboratory_id: labs[0]?.id || '', purpose: '', description: '', booking_date: '', start_time: settings.booking_start_hour, end_time: settings.booking_end_hour, expected_students: 30, equipment_needed: '', remarks: '' });
     setErrors({});
     setConflict(null);
   };
@@ -175,161 +248,181 @@ export default function BookLaboratoryPage() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6 max-w-4xl">
-      <div className="flex flex-col sm:flex-row justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold">Book Laboratory</h1>
-          <p className="text-muted-foreground text-sm mt-1">Submit a new laboratory booking request</p>
+    <main id="main-content" className="container-responsive" role="main">
+      <form onSubmit={handleSubmit} className="space-y-6 max-w-4xl mx-auto">
+        <div className="flex flex-col sm:flex-row justify-between gap-4">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold text-balance">Book Laboratory</h1>
+            <p className="text-muted-foreground text-sm mt-1">Submit a new laboratory booking request</p>
+          </div>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <Button type="button" variant="outline" onClick={() => router.back()} className="btn-responsive w-full sm:w-auto"><X className="h-4 w-4 mr-2" /> Cancel</Button>
+            <Button type="button" variant="outline" onClick={reset} className="btn-responsive w-full sm:w-auto"><RotateCcw className="h-4 w-4 mr-2" /> Reset</Button>
+            <Button type="submit" disabled={submitting || !!conflict} className="btn-responsive w-full sm:w-auto h-12 text-lg">
+              {submitting ? <Loader2 className="h-5 w-5 mr-2 animate-spin" /> : <Save className="h-5 w-5 mr-2" />}
+              Submit Booking
+            </Button>
+          </div>
         </div>
-        <div className="flex gap-2">
-          <Button type="button" variant="outline" onClick={() => router.back()}><X className="h-4 w-4 mr-2" /> Cancel</Button>
-          <Button type="button" variant="outline" onClick={reset}><RotateCcw className="h-4 w-4 mr-2" /> Reset</Button>
-          <Button type="submit" disabled={submitting || !!conflict}>
-            {submitting ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
-            Submit Booking
-          </Button>
-        </div>
-      </div>
 
-      {/* Teacher info (auto-filled) */}
-      <Card>
-        <CardHeader><CardTitle className="text-lg">Teacher Information</CardTitle><CardDescription>Auto-filled from your profile</CardDescription></CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <Label>Teacher Name</Label>
-              <Input value={teacher ? fullName(teacher) : ''} disabled />
-            </div>
-            <div>
-              <Label>Department</Label>
-              <Input value={teacher?.department || ''} disabled />
-            </div>
-            <div>
-              <Label>Teacher ID</Label>
-              <Input value={teacher?.teacher_id || ''} disabled />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Class info */}
-      <Card>
-        <CardHeader><CardTitle className="text-lg">Class Information</CardTitle></CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Class Name <span className="text-rose-500">*</span></Label>
-              <Input value={form.class_name} onChange={(e) => setForm({ ...form, class_name: e.target.value })} placeholder="e.g. CS101 - Intro to Programming" />
-              {errors.class_name && <p className="text-xs text-rose-500">{errors.class_name}</p>}
-            </div>
-            <div className="space-y-2">
-              <Label>Subject <span className="text-rose-500">*</span></Label>
-              <Input value={form.subject} onChange={(e) => setForm({ ...form, subject: e.target.value })} placeholder="e.g. Data Structures" />
-              {errors.subject && <p className="text-xs text-rose-500">{errors.subject}</p>}
-            </div>
-            <div className="space-y-2">
-              <Label>Strand</Label>
-              <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm" value={form.course} onChange={(e) => setForm({ ...form, course: e.target.value })}>
-                {COURSES.map((c) => <option key={c} value={c}>{c}</option>)}
-              </select>
-            </div>
-            <div className="space-y-2">
-              <Label>Year Level</Label>
-              <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm" value={form.year_level} onChange={(e) => setForm({ ...form, year_level: e.target.value })}>
-                {YEAR_LEVELS.map((y) => <option key={y} value={y}>{y}</option>)}
-              </select>
-            </div>
-            <div className="space-y-2">
-              <Label>Section</Label>
-              <Input value={form.section} onChange={(e) => setForm({ ...form, section: e.target.value })} placeholder="e.g. A" />
-            </div>
-            <div className="space-y-2">
-              <Label>Laboratory <span className="text-rose-500">*</span></Label>
-              <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm" value={form.laboratory_id} onChange={(e) => setForm({ ...form, laboratory_id: e.target.value })}>
-                {labs.map((l) => <option key={l.id} value={l.id}>{l.name} ({l.location || '—'})</option>)}
-              </select>
-              {errors.laboratory_id && <p className="text-xs text-rose-500">{errors.laboratory_id}</p>}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Schedule */}
-      <Card>
-        <CardHeader><CardTitle className="text-lg">Schedule</CardTitle></CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <Label>Booking Date <span className="text-rose-500">*</span></Label>
-              <div className="relative">
-                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input type="date" className="pl-10" value={form.booking_date} onChange={(e) => setForm({ ...form, booking_date: e.target.value })} min={new Date().toISOString().slice(0, 10)} />
+        {/* Teacher info (auto-filled) */}
+        <Card>
+          <CardHeader><CardTitle className="text-lg">Teacher Information</CardTitle><CardDescription>Auto-filled from your profile</CardDescription></CardHeader>
+          <CardContent className="card-responsive">
+            <div className="form-grid">
+              <div className="space-y-2">
+                <Label>Teacher Name</Label>
+                <Input value={teacher ? fullName(teacher) : ''} disabled className="input-responsive" />
               </div>
-              {errors.booking_date && <p className="text-xs text-rose-500">{errors.booking_date}</p>}
-            </div>
-            <div className="space-y-2">
-              <Label>Start Time <span className="text-rose-500">*</span></Label>
-              <div className="relative">
-                <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input type="time" className="pl-10" value={form.start_time} onChange={(e) => setForm({ ...form, start_time: e.target.value })} />
+              <div className="space-y-2">
+                <Label>Department</Label>
+                <Input value={teacher?.department || ''} disabled className="input-responsive" />
               </div>
-              {errors.start_time && <p className="text-xs text-rose-500">{errors.start_time}</p>}
-            </div>
-            <div className="space-y-2">
-              <Label>End Time <span className="text-rose-500">*</span></Label>
-              <div className="relative">
-                <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input type="time" className="pl-10" value={form.end_time} onChange={(e) => setForm({ ...form, end_time: e.target.value })} />
+              <div className="space-y-2">
+                <Label>Teacher ID</Label>
+                <Input value={teacher?.teacher_id || ''} disabled className="input-responsive" />
               </div>
-              {errors.end_time && <p className="text-xs text-rose-500">{errors.end_time}</p>}
             </div>
-          </div>
+          </CardContent>
+        </Card>
 
-          {conflict && (
-            <div className="mt-4 flex items-center gap-2 p-3 rounded-lg bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 text-rose-700 dark:text-rose-300 text-sm animate-fade-in">
-              <AlertTriangle className="h-4 w-4 shrink-0" />
-              {conflict}
+        {/* Class info */}
+        <Card>
+          <CardHeader><CardTitle className="text-lg">Class Information</CardTitle></CardHeader>
+          <CardContent className="card-responsive">
+            <div className="form-grid">
+              <div className="space-y-2">
+                <Label>Class Name <span className="text-rose-500">*</span></Label>
+                <Input value={form.class_name} onChange={(e) => setForm({ ...form, class_name: e.target.value })} placeholder="e.g. CS101 - Intro to Programming" className="input-responsive" />
+                {errors.class_name && <p className="text-xs text-rose-500">{errors.class_name}</p>}
+              </div>
+              <div className="space-y-2">
+                <Label>Subject <span className="text-rose-500">*</span></Label>
+                <Input value={form.subject} onChange={(e) => setForm({ ...form, subject: e.target.value })} placeholder="e.g. Data Structures" className="input-responsive" />
+                {errors.subject && <p className="text-xs text-rose-500">{errors.subject}</p>}
+              </div>
+              <div className="space-y-2">
+                <Label>Strand</Label>
+                <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm input-responsive" value={form.course} onChange={(e) => setForm({ ...form, course: e.target.value })}>
+                  {COURSES.map((c) => <option key={c} value={c}>{c}</option>)}
+                </select>
+              </div>
+              <div className="space-y-2">
+                <Label>Year Level</Label>
+                <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm input-responsive" value={form.year_level} onChange={(e) => setForm({ ...form, year_level: e.target.value })}>
+                  {YEAR_LEVELS.map((y) => <option key={y} value={y}>{y}</option>)}
+                </select>
+              </div>
+              <div className="space-y-2">
+                <Label>Section</Label>
+                <Input value={form.section} onChange={(e) => setForm({ ...form, section: e.target.value })} placeholder="e.g. A" className="input-responsive" />
+              </div>
+              <div className="space-y-2">
+                <Label>Laboratory <span className="text-rose-500">*</span></Label>
+                <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm input-responsive" value={form.laboratory_id} onChange={(e) => setForm({ ...form, laboratory_id: e.target.value })}>
+                  {labs.map((l) => <option key={l.id} value={l.id}>{l.name} ({l.location || '—'})</option>)}
+                </select>
+                {errors.laboratory_id && <p className="text-xs text-rose-500">{errors.laboratory_id}</p>}
+              </div>
             </div>
-          )}
-          {!conflict && form.booking_date && form.start_time && form.end_time && (
-            <div className="mt-4 flex items-center gap-2 p-3 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900 text-emerald-700 dark:text-emerald-300 text-sm animate-fade-in">
-              <Monitor className="h-4 w-4 shrink-0" />
-              No conflicts detected for this time slot.
-            </div>
-          )}
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
 
-      {/* Details */}
-      <Card>
-        <CardHeader><CardTitle className="text-lg">Booking Details</CardTitle></CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Purpose <span className="text-rose-500">*</span></Label>
-              <Input value={form.purpose} onChange={(e) => setForm({ ...form, purpose: e.target.value })} placeholder="e.g. Laboratory exercise, exam, project" />
-              {errors.purpose && <p className="text-xs text-rose-500">{errors.purpose}</p>}
+        {/* Schedule */}
+        <Card>
+          <CardHeader><CardTitle className="text-lg">Schedule</CardTitle></CardHeader>
+          <CardContent className="card-responsive">
+            <div className="form-grid">
+              <div className="space-y-2">
+                <Label>Booking Date <span className="text-rose-500">*</span></Label>
+                <div className="relative">
+                  <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input type="date" className="pl-10 input-responsive" value={form.booking_date} onChange={(e) => setForm({ ...form, booking_date: e.target.value })} min={new Date().toISOString().slice(0, 10)} />
+                </div>
+                {errors.booking_date && <p className="text-xs text-rose-500">{errors.booking_date}</p>}
+              </div>
+              <div className="space-y-2">
+                <Label>Start Time <span className="text-rose-500">*</span></Label>
+                <div className="relative">
+                  <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    type="time"
+                    className="pl-10 h-12 text-lg input-responsive"
+                    value={form.start_time}
+                    onChange={(e) => setForm({ ...form, start_time: e.target.value })}
+                    step={settings.time_slot_interval_minutes * 60}
+                    min={settings.booking_start_hour}
+                    max={settings.booking_end_hour}
+                    inputMode="numeric"
+                  />
+                </div>
+                {errors.start_time && <p className="text-xs text-rose-500">{errors.start_time}</p>}
+              </div>
+              <div className="space-y-2">
+                <Label>End Time <span className="text-rose-500">*</span></Label>
+                <div className="relative">
+                  <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    type="time"
+                    className="pl-10 h-12 text-lg input-responsive"
+                    value={form.end_time}
+                    onChange={(e) => setForm({ ...form, end_time: e.target.value })}
+                    step={settings.time_slot_interval_minutes * 60}
+                    min={settings.booking_start_hour}
+                    max={settings.booking_end_hour}
+                    inputMode="numeric"
+                  />
+                </div>
+                {errors.end_time && <p className="text-xs text-rose-500">{errors.end_time}</p>}
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label>Expected Number of Students</Label>
-              <Input type="number" min={1} value={form.expected_students} onChange={(e) => setForm({ ...form, expected_students: parseInt(e.target.value) || 1 })} />
-              {errors.expected_students && <p className="text-xs text-rose-500">{errors.expected_students}</p>}
+
+            {conflict && (
+              <div className="mt-4 flex items-center gap-2 p-3 rounded-lg bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 text-rose-700 dark:text-rose-300 text-sm animate-fade-in">
+                <AlertTriangle className="h-4 w-4 shrink-0" />
+                {conflict}
+              </div>
+            )}
+            {!conflict && form.booking_date && form.start_time && form.end_time && (
+              <div className="mt-4 flex items-center gap-2 p-3 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900 text-emerald-700 dark:text-emerald-300 text-sm animate-fade-in">
+                <Monitor className="h-4 w-4 shrink-0" />
+                No conflicts detected for this time slot.
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Details */}
+        <Card>
+          <CardHeader><CardTitle className="text-lg">Booking Details</CardTitle></CardHeader>
+          <CardContent className="card-responsive">
+            <div className="form-grid">
+              <div className="space-y-2">
+                <Label>Purpose <span className="text-rose-500">*</span></Label>
+                <Input value={form.purpose} onChange={(e) => setForm({ ...form, purpose: e.target.value })} placeholder="e.g. Laboratory exercise, exam, project" className="input-responsive" />
+                {errors.purpose && <p className="text-xs text-rose-500">{errors.purpose}</p>}
+              </div>
+              <div className="space-y-2">
+                <Label>Expected Number of Students</Label>
+                <Input type="number" min={1} value={form.expected_students} onChange={(e) => setForm({ ...form, expected_students: parseInt(e.target.value) || 1 })} className="input-responsive" />
+                {errors.expected_students && <p className="text-xs text-rose-500">{errors.expected_students}</p>}
+              </div>
+              <div className="space-y-2 md:col-span-2">
+                <Label>Equipment Needed</Label>
+                <Input value={form.equipment_needed} onChange={(e) => setForm({ ...form, equipment_needed: e.target.value })} placeholder={`Available: ${EQUIPMENT_OPTIONS.join(', ')}`} className="input-responsive" />
+              </div>
+              <div className="space-y-2 md:col-span-2">
+                <Label>Description</Label>
+                <Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Additional details about the booking..." className="input-responsive min-h-[100px]" />
+              </div>
+              <div className="space-y-2 md:col-span-2">
+                <Label>Remarks</Label>
+                <Textarea value={form.remarks} onChange={(e) => setForm({ ...form, remarks: e.target.value })} placeholder="Any special requests or remarks..." className="input-responsive min-h-[100px]" />
+              </div>
             </div>
-            <div className="space-y-2 md:col-span-2">
-              <Label>Equipment Needed</Label>
-              <Input value={form.equipment_needed} onChange={(e) => setForm({ ...form, equipment_needed: e.target.value })} placeholder={`Available: ${EQUIPMENT_OPTIONS.join(', ')}`} />
-            </div>
-            <div className="space-y-2 md:col-span-2">
-              <Label>Description</Label>
-              <Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Additional details about the booking..." />
-            </div>
-            <div className="space-y-2 md:col-span-2">
-              <Label>Remarks</Label>
-              <Textarea value={form.remarks} onChange={(e) => setForm({ ...form, remarks: e.target.value })} placeholder="Any special requests or remarks..." />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    </form>
+          </CardContent>
+        </Card>
+      </form>
+    </main>
   );
 }

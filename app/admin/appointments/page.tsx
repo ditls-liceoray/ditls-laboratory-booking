@@ -98,7 +98,7 @@ export default function AppointmentsPage() {
     w.document.write(`
       <html><head><title>Booking Slip - ${b.reference_no}</title>
       <style>body{font-family:Arial,sans-serif;padding:40px;max-width:600px;margin:auto}h1{color:#2563eb}.ref{font-size:24px;font-weight:bold}table{width:100%;border-collapse:collapse;margin-top:20px}td{padding:8px;border-bottom:1px solid #ddd}td:first-child{font-weight:bold;width:40%;color:#555}</style>
-      </head><body><h1>CLBS Booking Slip</h1><p class="ref">${b.reference_no}</p><table>
+      </head><body><h1>Computer and Robotics Booking Slip</h1><p class="ref">${b.reference_no}</p><table>
       <tr><td>Teacher</td><td>${b.teacher ? fullName(b.teacher) : '—'}</td></tr>
       <tr><td>Class</td><td>${b.class_name}</td></tr><tr><td>Subject</td><td>${b.subject}</td></tr>
       <tr><td>Laboratory</td><td>${b.laboratory?.name || '—'}</td></tr>
@@ -124,19 +124,21 @@ export default function AppointmentsPage() {
     toast.success('Exported to CSV (Excel-compatible).');
   };
 
-  return (
-    <div className="space-y-6">
+return (
+    <main id="main-content" className="container-responsive space-y-6" role="main">
       <PageHeader title="Appointments" description="Manage all booking appointments">
-        <Button variant="outline" onClick={exportCSV}><Download className="h-4 w-4 mr-2" /> Export Excel</Button>
+        <Button variant="outline" onClick={exportCSV} className="btn-responsive"><Download className="h-4 w-4 mr-2" /> Export Excel</Button>
       </PageHeader>
 
       {/* Tabs */}
-      <div className="flex gap-1 overflow-x-auto scrollbar-thin pb-1">
+      <div className="flex gap-1 overflow-x-auto scrollbar-thin pb-1" role="tablist" aria-label="Booking status filters">
         {TABS.map((t) => (
           <button
             key={t.key}
             onClick={() => { setTab(t.key); setPage(1); }}
-            className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
+            role="tab"
+            aria-selected={tab === t.key}
+            className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors touch-target ${
               tab === t.key ? 'bg-primary text-primary-foreground' : 'hover:bg-accent'
             }`}
           >
@@ -150,9 +152,9 @@ export default function AppointmentsPage() {
           <div className="flex flex-col sm:flex-row gap-3">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input placeholder="Search appointments..." className="pl-10" value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} />
+              <Input placeholder="Search appointments..." className="pl-10 input-responsive" value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} />
             </div>
-            <select className="flex h-10 rounded-md border border-input bg-background px-3 text-sm" value={teacherFilter} onChange={(e) => { setTeacherFilter(e.target.value); setPage(1); }}>
+            <select className="flex h-10 w-full sm:w-auto rounded-md border border-input bg-background px-3 text-sm input-responsive" value={teacherFilter} onChange={(e) => { setTeacherFilter(e.target.value); setPage(1); }}>
               <option value="all">All Teachers</option>
               {teachers.map((t) => <option key={t.id} value={t.id}>{fullName(t)}</option>)}
             </select>
@@ -164,7 +166,7 @@ export default function AppointmentsPage() {
             <EmptyState icon={CalendarClock} title="No appointments found" description="No appointments match your current filters." />
           ) : (
             <>
-              <div className="rounded-lg border overflow-x-auto">
+              <div className="table-responsive">
                 <Table>
                   <TableHeader>
                     <TableRow className="bg-muted/50">
@@ -172,7 +174,7 @@ export default function AppointmentsPage() {
                       <TableHead>Class / Subject</TableHead>
                       <TableHead>Teacher</TableHead>
                       <TableHead>Laboratory</TableHead>
-                      <TableHead>Date &amp; Time</TableHead>
+                      <TableHead>Date & Time</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
@@ -188,19 +190,19 @@ export default function AppointmentsPage() {
                         <TableCell><StatusBadge status={b.status} /></TableCell>
                         <TableCell>
                           <div className="flex items-center justify-end gap-1">
-                            <button onClick={() => setSelected(b)} className="p-1.5 rounded-md hover:bg-blue-100 dark:hover:bg-blue-900/40 text-blue-600 dark:text-blue-400" title="View"><Eye className="h-4 w-4" /></button>
-                            <button onClick={() => printBooking(b)} className="p-1.5 rounded-md hover:bg-accent" title="Print"><Printer className="h-4 w-4" /></button>
+                            <button onClick={() => setSelected(b)} className="p-1.5 rounded-md hover:bg-blue-100 dark:hover:bg-blue-900/40 text-blue-600 dark:text-blue-400 touch-target" title="View" aria-label="View booking details"><Eye className="h-4 w-4" /></button>
+                            <button onClick={() => printBooking(b)} className="p-1.5 rounded-md hover:bg-accent touch-target" title="Print" aria-label="Print booking slip"><Printer className="h-4 w-4" /></button>
                             {b.status === 'pending' && (
                               <>
-                                <button onClick={() => setActionTarget({ booking: b, action: 'approve' })} className="p-1.5 rounded-md hover:bg-emerald-100 dark:hover:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400" title="Approve"><CheckCircle className="h-4 w-4" /></button>
-                                <button onClick={() => setActionTarget({ booking: b, action: 'reject' })} className="p-1.5 rounded-md hover:bg-rose-100 dark:hover:bg-rose-900/40 text-rose-600 dark:text-rose-400" title="Reject"><XCircle className="h-4 w-4" /></button>
+                                <button onClick={() => setActionTarget({ booking: b, action: 'approve' })} className="p-1.5 rounded-md hover:bg-emerald-100 dark:hover:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400 touch-target" aria-label="Approve"><CheckCircle className="h-4 w-4" /></button>
+                                <button onClick={() => setActionTarget({ booking: b, action: 'reject' })} className="p-1.5 rounded-md hover:bg-rose-100 dark:hover:bg-rose-900/40 text-rose-600 dark:text-rose-400 touch-target" aria-label="Reject"><XCircle className="h-4 w-4" /></button>
                               </>
                             )}
                             {b.status === 'approved' && (
-                              <button onClick={() => setActionTarget({ booking: b, action: 'complete' })} className="p-1.5 rounded-md hover:bg-blue-100 dark:hover:bg-blue-900/40 text-blue-600 dark:text-blue-400" title="Complete"><CalendarCheck className="h-4 w-4" /></button>
+                              <button onClick={() => setActionTarget({ booking: b, action: 'complete' })} className="p-1.5 rounded-md hover:bg-primary-100 dark:hover:bg-primary-900/40 text-primary-600 dark:text-primary-400 touch-target" aria-label="Mark completed"><CalendarCheck className="h-4 w-4" /></button>
                             )}
                             {(b.status === 'pending' || b.status === 'approved') && (
-                              <button onClick={() => setActionTarget({ booking: b, action: 'cancel' })} className="p-1.5 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400" title="Cancel"><XCircle className="h-4 w-4" /></button>
+                              <button onClick={() => setActionTarget({ booking: b, action: 'cancel' })} className="p-1.5 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400 touch-target" aria-label="Cancel"><XCircle className="h-4 w-4" /></button>
                             )}
                           </div>
                         </TableCell>
@@ -218,14 +220,14 @@ export default function AppointmentsPage() {
       {selected && <BookingDetails booking={selected} onClose={() => setSelected(null)} />}
 
       {actionTarget && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 animate-fade-in" onClick={() => setActionTarget(null)}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 animate-fade-in" onClick={() => setActionTarget(null)} role="dialog" aria-modal="true" aria-labelledby="dialog-title">
           <div className="bg-background rounded-lg p-6 max-w-md w-full mx-4 animate-scale-in" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-lg font-semibold mb-2 capitalize">{actionTarget.action} Booking</h3>
+            <h3 id="dialog-title" className="text-lg font-semibold mb-2 capitalize">{actionTarget.action} Booking</h3>
             <p className="text-sm text-muted-foreground mb-4">Are you sure you want to {actionTarget.action} booking <span className="font-mono font-semibold">{actionTarget.booking.reference_no}</span>?</p>
-            <textarea className="w-full min-h-20 rounded-md border border-input bg-background p-3 text-sm mb-4" placeholder="Admin notes (optional)..." value={adminNotes} onChange={(e) => setAdminNotes(e.target.value)} />
+            <textarea className="w-full min-h-20 rounded-md border border-input bg-background p-3 text-sm mb-4 input-responsive" placeholder="Admin notes (optional)..." value={adminNotes} onChange={(e) => setAdminNotes(e.target.value)} />
             <div className="flex gap-2 justify-end">
-              <Button variant="outline" onClick={() => { setActionTarget(null); setAdminNotes(''); }}>Cancel</Button>
-              <Button variant={actionTarget.action === 'reject' || actionTarget.action === 'cancel' ? 'destructive' : 'default'} onClick={handleAction} disabled={acting}>
+              <Button variant="outline" onClick={() => { setActionTarget(null); setAdminNotes(''); }} className="btn-responsive">Cancel</Button>
+              <Button variant={actionTarget.action === 'reject' || actionTarget.action === 'cancel' ? 'destructive' : 'default'} onClick={handleAction} disabled={acting} className="btn-responsive">
                 {acting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
                 {actionTarget.action === 'approve' ? 'Approve' : actionTarget.action === 'reject' ? 'Reject' : actionTarget.action === 'complete' ? 'Complete' : 'Cancel Booking'}
               </Button>
@@ -233,6 +235,6 @@ export default function AppointmentsPage() {
           </div>
         </div>
       )}
-    </div>
+    </main>
   );
 }

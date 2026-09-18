@@ -16,7 +16,7 @@ import {
   Table, TableHeader, TableBody, TableHead, TableRow, TableCell,
 } from '@/components/ui/table';
 import {
-  Search, UserPlus, Eye, Pencil, Trash2, Users, ChevronUp, ChevronDown, ArrowLeft, Loader2,
+  Search, UserPlus, Eye, Pencil, Trash2, Users, ChevronUp, ChevronDown, ArrowLeft, Loader2, MoreHorizontal,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -167,14 +167,14 @@ export default function ViewTeachersPage() {
                   <TableHeader>
                     <TableRow className="bg-muted/50">
                       <TableHead>
-                        <button className="flex items-center gap-1 hover:text-foreground" onClick={() => toggleSort('teacher_id')}>
+                        <button className="flex items-center gap-1 hover:text-foreground" onClick={() => toggleSort('teacher_id')} aria-label="Sort by Teacher ID">
                           Teacher ID
                           {sortKey === 'teacher_id' && (sortDir === 'asc' ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />)}
                         </button>
                       </TableHead>
                       <TableHead>Profile</TableHead>
                       <TableHead>
-                        <button className="flex items-center gap-1 hover:text-foreground" onClick={() => toggleSort('first_name')}>
+                        <button className="flex items-center gap-1 hover:text-foreground" onClick={() => toggleSort('first_name')} aria-label="Sort by Full Name">
                           Full Name
                           {sortKey === 'first_name' && (sortDir === 'asc' ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />)}
                         </button>
@@ -230,18 +230,35 @@ export default function ViewTeachersPage() {
                         <TableCell className="text-sm text-muted-foreground">{formatDate(t.created_at)}</TableCell>
                         <TableCell>
                           <div className="flex items-center justify-end gap-1">
-                            <Link href={`/admin/teachers/edit/${t.id}`}>
-                              <button className="p-1.5 rounded-md hover:bg-blue-100 dark:hover:bg-blue-900/40 text-blue-600 dark:text-blue-400" title="Edit">
-                                <Pencil className="h-4 w-4" />
+                            <div className="relative">
+                              <button
+                                className="p-1.5 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  // Toggle dropdown
+                                }}
+                              >
+                                <MoreHorizontal className="h-4 w-4" />
                               </button>
-                            </Link>
-                            <button
-                              onClick={() => setDeleteTarget(t)}
-                              className="p-1.5 rounded-md hover:bg-rose-100 dark:hover:bg-rose-900/40 text-rose-600 dark:text-rose-400"
-                              title="Delete"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </button>
+                              <div className="absolute right-0 top-full mt-1 z-10 hidden group-hover:block">
+                                <div className="bg-white dark:bg-gray-800 rounded-md shadow-lg border py-1 min-w-[120px]">
+                                  <Link href={`/admin/teachers/edit/${t.id}`} className="block px-3 py-2 text-sm text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20">
+                                    <Pencil className="h-4 w-4 mr-2 inline" /> Edit
+                                  </Link>
+                                  <button
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      e.stopPropagation();
+                                      setDeleteTarget(t);
+                                    }}
+                                    className="block w-full px-3 py-2 text-sm text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20 text-left"
+                                  >
+                                    <Trash2 className="h-4 w-4 mr-2 inline" /> Delete
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
                           </div>
                         </TableCell>
                       </TableRow>
