@@ -46,6 +46,15 @@ export default function AppointmentsPage() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const accessToken = session?.access_token;
+      await fetch('/api/admin/complete-expired', { 
+        method: 'POST', 
+        headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined 
+      }).catch(() => {
+        // Silent fail: completion is best-effort; don't block UI
+      });
+
       const [{ data, error }, t] = await Promise.all([
         supabase.from('bookings').select(`*, teacher:teachers(*), laboratory:laboratories(*)`).order('created_at', { ascending: false }),
         fetchTeachers(),
@@ -60,7 +69,38 @@ export default function AppointmentsPage() {
     }
   }, []);
 
+  // Refresh appointments without showing loading state (for periodic polling)
+  const refreshAppointments = useCallback(async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const accessToken = session?.access_token;
+      await fetch('/api/admin/complete-expired', { 
+        method: 'POST', 
+        headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined 
+      }).catch(() => {
+        // Silent fail: completion is best-effort; don't block UI
+      });
+
+      const [{ data, error }] = await Promise.all([
+        supabase.from('bookings').select(`*, teacher:teachers(*), laboratory:laboratories(*)`).order('created_at', { ascending: false }),
+      ]);
+      if (error) throw error;
+      setBookings((data || []) as unknown as Booking[]);
+    } catch {
+      // Silent fail for periodic refresh; don't toast or show loading
+    }
+  }, []);
+
   useEffect(() => { load(); }, [load]);
+
+  // Periodic polling for expired bookings completion (every 5 minutes)
+  useEffect(() => {
+    const intervalRef = setInterval(() => {
+      refreshAppointments();
+    }, 300000); // 5 minutes = 300,000 ms
+
+    return () => clearInterval(intervalRef);
+  }, [refreshAppointments]);
 
   const filtered = useMemo(() => {
     let result = [...bookings];
