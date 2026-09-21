@@ -60,12 +60,9 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col lg:flex-row bg-[#FAF8F4]">
-
-      {/* =========================================================
-        LEFT DESIGN PANEL
-    ========================================================= */}
-      <div className="relative flex-1 lg:w-[51.2%] min-h-[400px] lg:min-h-screen overflow-hidden bg-[#FAF8F4]">
+    <div className="min-h-screen w-full overflow-x-hidden lg:flex bg-[#FAF8F4]">
+      {/* LEFT DESIGN PANEL (Desktop only) */}
+      <div className="hidden lg:flex lg:w-[51.2%] lg:min-h-screen relative overflow-hidden bg-[#FAF8F4]">
 
         {/* ---------------------------------------------------------
           TOP MAROON ARC (Desktop only)
@@ -513,7 +510,7 @@ export default function LoginPage() {
     ========================================================= */}
       <div
         className="
-        flex-1
+        w-full lg:flex-1
         min-h-screen
         bg-white
         relative
