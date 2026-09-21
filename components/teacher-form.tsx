@@ -175,6 +175,35 @@ export default function TeacherForm({ teacher }: { teacher?: Teacher }) {
           .eq('id', teacher.id);
         if (tError) throw tError;
 
+        // If password provided, update Supabase Auth password via Edge Function
+        if (form.password) {
+          const { data: { session } } = await supabase.auth.getSession();
+          const accessToken = session?.access_token;
+
+          const supabaseUrl =
+            process.env.NEXT_PUBLIC_SUPABASE_URL ||
+            process.env.SUPABASE_URL ||
+            '';
+
+          const response = await fetch(`${supabaseUrl}/functions/v1/update-teacher-password`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${accessToken || ''}`,
+            },
+            body: JSON.stringify({
+              profile_id: teacher.profile_id,
+              password: form.password,
+            }),
+          });
+
+          if (!response.ok) {
+            await logActivity('edit_teacher', `Updated teacher ${fullName(form)} (password update failed)`);
+            toast.error('Teacher information was updated, but the password could not be changed.');
+            return;
+          }
+        }
+
         await logActivity('edit_teacher', `Updated teacher ${fullName(form)}`);
         toast.success('Teacher updated successfully.');
         router.push('/admin/teachers');
