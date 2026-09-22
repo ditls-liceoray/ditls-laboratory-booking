@@ -220,3 +220,12 @@
 .animate-slideDown {
   animation: slideDown 0.8s ease-out forwards;
 }
+
+/* Small positioning adjustments */
+.dills-section {
+  transform: translateX(8px);
+}
+
+.instant-notifications {
+  transform: translateY(-5px);
+}

@@ -70,8 +70,8 @@ export default function LoginPage() {
         <div
           className="
           absolute
-          -top-[430px]
-          -left-[230px]
+          -top-[480px]
+          -left-[250px]
           w-[1050px]
           h-[600px]
           rounded-[50%]
@@ -459,7 +459,7 @@ export default function LoginPage() {
           className="
           absolute
           z-[5]
-          -left-[13%]
+          -left-[-15%]
           -bottom-[49%]
           w-[126%]
           h-[67%]
@@ -467,6 +467,7 @@ export default function LoginPage() {
           bg-[#850019]
           border-t-[5px]
           border-[#D4A72C]
+          lg:block hidden
         "
         />
 
