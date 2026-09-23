@@ -12,7 +12,15 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import { Loader2, Save, X, RotateCcw, Calendar, Clock, Monitor, AlertTriangle, Info } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import { Loader2, Save, X, RotateCcw, Calendar, Clock, Monitor, AlertTriangle, Info, CheckCircle } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function BookLaboratoryPage() {
@@ -37,6 +45,7 @@ export default function BookLaboratoryPage() {
     expected_students: 30, equipment_needed: '', remarks: '',
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [showReminder, setShowReminder] = useState(true);
   const conflictCheckId = useRef(0);
   const isSubmittingRef = useRef(false);
 
@@ -423,6 +432,111 @@ export default function BookLaboratoryPage() {
           </CardContent>
         </Card>
       </form>
+
+      {/* Booking Reminder Modal */}
+      <Dialog open={showReminder} onOpenChange={setShowReminder}>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto z-[100]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-lg sm:text-xl">
+              <CheckCircle className="h-5 w-5 text-primary" aria-hidden="true" />
+              Booking Reminder
+            </DialogTitle>
+          </DialogHeader>
+          {/* <DialogDescription className="space-y-4 text-sm leading-relaxed">
+            <p className="font-medium">Before submitting a laboratory booking, please make sure that <strong>all required fields are completely filled out</strong> and that the information provided is <strong>correct and accurate</strong>.</p>
+            <p className="font-medium">Please carefully check the following:</p>
+            <ul className="list-disc list-inside space-y-2 pl-4">
+              <li><strong>Class Information</strong> – Make sure the class name, subject, strand, year level, and section are correct.</li>
+              <li><strong>Laboratory</strong> – Select the correct laboratory where the class will be conducted.</li>
+              <li><strong>Date and Time</strong> – Double-check the booking date, start time, and end time.</li>
+              <li><strong>Purpose / Activity</strong> – Clearly indicate the activity or purpose of the laboratory booking.</li>
+              <li><strong>Additional Details</strong> – Provide any required information or notes that may help the laboratory custodian understand the request.</li>
+            </ul>
+            <p className="pt-2 border-t border-border">
+              <strong className="text-destructive">Important:</strong> Incomplete or incorrect information may cause your booking request to be <strong>returned for correction or delayed for processing</strong>.
+            </p>
+            <p className="pb-2">
+              Before clicking <strong>Submit</strong>, please take a moment to review your booking details and make sure everything is complete.
+            </p>
+            <p className="text-muted-foreground text-sm">
+              Thank you for helping us maintain <strong>accurate, organized, and conflict-free laboratory reservations</strong>.
+            </p>
+          </DialogDescription> */}
+
+          <div className="space-y-4 text-sm leading-relaxed">
+            <p className="font-medium">
+              Before submitting a laboratory booking, please make sure that{" "}
+              <strong>all required fields are completely filled out</strong> and that
+              the information provided is <strong>correct and accurate</strong>.
+            </p>
+
+            <p className="font-medium">
+              Please carefully check the following:
+            </p>
+
+            <ul className="list-disc list-inside space-y-2 pl-4">
+              <li>
+                <strong>Class Information</strong> – Make sure the class name, subject,
+                strand, year level, and section are correct.
+              </li>
+
+              <li>
+                <strong>Laboratory</strong> – Select the correct laboratory where the
+                class will be conducted.
+              </li>
+
+              <li>
+                <strong>Date and Time</strong> – Double-check the booking date, start
+                time, and end time.
+              </li>
+
+              <li>
+                <strong>Purpose / Activity</strong> – Clearly indicate the activity or
+                purpose of the laboratory booking.
+              </li>
+
+              <li>
+                <strong>Additional Details</strong> – Provide any required information
+                or notes that may help the laboratory custodian understand the request.
+              </li>
+            </ul>
+
+            <p className="pt-2 border-t border-border">
+              <strong className="text-destructive">Important:</strong> Incomplete or
+              incorrect information may cause your booking request to{" "}
+              <strong>be returned for correction or delayed for processing</strong>.
+            </p>
+
+            <p className="font-semibold">
+              <strong>Do not enter or select &quot;None&quot;</strong> for any required
+              field during the booking process. Please provide the appropriate and relevant
+              information for every required field.
+            </p>
+
+            <p className="pb-2">
+              Before clicking <strong>Submit</strong>, please take a moment to review
+              your booking details and make sure everything is complete.
+            </p>
+
+            <p className="text-muted-foreground text-sm">
+              Thank you for helping us maintain{" "}
+              <strong>
+                accurate, organized, and conflict-free laboratory reservations
+              </strong>
+              .
+            </p>
+          </div>
+
+          <DialogFooter>
+            <Button
+              onClick={() => setShowReminder(false)}
+              className="w-full sm:w-auto"
+            >
+              Got it, I understand
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </main>
   );
 }
