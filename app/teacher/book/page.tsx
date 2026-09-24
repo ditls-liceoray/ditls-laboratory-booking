@@ -49,6 +49,32 @@ export default function BookLaboratoryPage() {
   const conflictCheckId = useRef(0);
   const isSubmittingRef = useRef(false);
 
+  // Placeholder values that should be rejected
+  const PLACEHOLDER_VALUES = new Set([
+    'none', 'n/a', 'na', '-', '--', 'test', 'testing', 'ok', 'okay',
+    'no description', 'no desc', 'not applicable', 'no remarks',
+    'no equipment', 'n/a', 'n.a.', 'n / a',
+  ]);
+
+  function isPlaceholderValue(value: string): boolean {
+    const trimmed = value.trim().toLowerCase();
+    return PLACEHOLDER_VALUES.has(trimmed);
+  }
+
+  function validateTextField(value: string, minLength: number, fieldName: string): string | null {
+    const trimmed = value.trim();
+    if (!trimmed) {
+      return `${fieldName} is required`;
+    }
+    if (trimmed.length < minLength) {
+      return `${fieldName} must contain at least ${minLength} meaningful characters`;
+    }
+    if (isPlaceholderValue(trimmed)) {
+      return `${fieldName} cannot be a placeholder value (e.g., "None", "N/A", "-")`;
+    }
+    return null;
+  }
+
   // Fetch booking policy settings
   useEffect(() => {
     (async () => {
@@ -128,12 +154,31 @@ export default function BookLaboratoryPage() {
     const e: Record<string, string> = {};
     if (!form.class_name.trim()) e.class_name = 'Class name is required';
     if (!form.subject.trim()) e.subject = 'Subject is required';
+    if (!form.course) e.course = 'Strand is required';
+    if (!form.year_level) e.year_level = 'Year Level is required';
+    if (!form.section.trim()) e.section = 'Section is required';
     if (!form.laboratory_id) e.laboratory_id = 'Please select a laboratory';
     if (!form.purpose.trim()) e.purpose = 'Purpose is required';
     if (!form.booking_date) e.booking_date = 'Date is required';
     if (!form.start_time) e.start_time = 'Start time is required';
     if (!form.end_time) e.end_time = 'End time is required';
     if (form.start_time >= form.end_time) e.end_time = 'End time must be after start time';
+
+    // Purpose placeholder validation
+    const purposeError = validateTextField(form.purpose, 3, 'Purpose');
+    if (purposeError) e.purpose = purposeError;
+
+    // Description validation: min 20 chars, no placeholders
+    const descError = validateTextField(form.description, 20, 'Description');
+    if (descError) e.description = descError;
+
+    // Remarks validation: min 10 chars, no placeholders
+    const remarksError = validateTextField(form.remarks, 10, 'Remarks');
+    if (remarksError) e.remarks = remarksError;
+
+    // Equipment needed validation: required, no placeholders
+    const equipError = validateTextField(form.equipment_needed, 1, 'Equipment Needed');
+    if (equipError) e.equipment_needed = equipError;
 
     // Duration validation
     if (form.start_time && form.end_time) {
@@ -164,7 +209,11 @@ export default function BookLaboratoryPage() {
       }
     }
 
-    if (form.expected_students < 1) e.expected_students = 'Must be at least 1';
+    // Expected students validation
+    if (!Number.isInteger(form.expected_students) || form.expected_students < 1) {
+      e.expected_students = 'Please enter a valid number of students greater than 0';
+    }
+
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -179,26 +228,29 @@ export default function BookLaboratoryPage() {
     isSubmittingRef.current = true;
     setSubmitting(true);
     try {
+      // Trim all text fields before submission
+      const trimmedData = {
+        teacher_id: teacher.id,
+        laboratory_id: form.laboratory_id,
+        class_name: form.class_name.trim(),
+        subject: form.subject.trim(),
+        course: form.course,
+        year_level: form.year_level,
+        section: form.section.trim() || null,
+        purpose: form.purpose.trim(),
+        description: form.description.trim(),
+        booking_date: form.booking_date,
+        start_time: form.start_time,
+        end_time: form.end_time,
+        expected_students: form.expected_students,
+        equipment_needed: form.equipment_needed.trim(),
+        remarks: form.remarks.trim(),
+        status: 'pending',
+      };
+
       const { data, error } = await supabase
         .from('bookings')
-        .insert({
-          teacher_id: teacher.id,
-          laboratory_id: form.laboratory_id,
-          class_name: form.class_name,
-          subject: form.subject,
-          course: form.course,
-          year_level: form.year_level,
-          section: form.section || null,
-          purpose: form.purpose,
-          description: form.description || null,
-          booking_date: form.booking_date,
-          start_time: form.start_time,
-          end_time: form.end_time,
-          expected_students: form.expected_students,
-          equipment_needed: form.equipment_needed || null,
-          remarks: form.remarks || null,
-          status: 'pending',
-        })
+        .insert(trimmedData)
         .select()
         .single();
 
@@ -311,20 +363,23 @@ export default function BookLaboratoryPage() {
                 {errors.subject && <p className="text-xs text-rose-500">{errors.subject}</p>}
               </div>
               <div className="space-y-2">
-                <Label>Strand</Label>
+                <Label>Strand <span className="text-rose-500">*</span></Label>
                 <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm input-responsive" value={form.course} onChange={(e) => setForm({ ...form, course: e.target.value })}>
                   {COURSES.map((c) => <option key={c} value={c}>{c}</option>)}
                 </select>
+                {errors.course && <p className="text-xs text-rose-500">{errors.course}</p>}
               </div>
               <div className="space-y-2">
-                <Label>Year Level</Label>
+                <Label>Year Level <span className="text-rose-500">*</span></Label>
                 <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm input-responsive" value={form.year_level} onChange={(e) => setForm({ ...form, year_level: e.target.value })}>
                   {YEAR_LEVELS.map((y) => <option key={y} value={y}>{y}</option>)}
                 </select>
+                {errors.year_level && <p className="text-xs text-rose-500">{errors.year_level}</p>}
               </div>
               <div className="space-y-2">
-                <Label>Section</Label>
+                <Label>Section <span className="text-rose-500">*</span></Label>
                 <Input value={form.section} onChange={(e) => setForm({ ...form, section: e.target.value })} placeholder="e.g. A" className="input-responsive" />
+                {errors.section && <p className="text-xs text-rose-500">{errors.section}</p>}
               </div>
               <div className="space-y-2">
                 <Label>Laboratory <span className="text-rose-500">*</span></Label>
@@ -412,21 +467,24 @@ export default function BookLaboratoryPage() {
                 {errors.purpose && <p className="text-xs text-rose-500">{errors.purpose}</p>}
               </div>
               <div className="space-y-2">
-                <Label>Expected Number of Students</Label>
+                <Label>Expected Number of Students <span className="text-rose-500">*</span></Label>
                 <Input type="number" min={1} value={form.expected_students} onChange={(e) => setForm({ ...form, expected_students: parseInt(e.target.value) || 1 })} className="input-responsive" />
                 {errors.expected_students && <p className="text-xs text-rose-500">{errors.expected_students}</p>}
               </div>
               <div className="space-y-2 md:col-span-2">
-                <Label>Equipment Needed</Label>
+                <Label>Equipment Needed <span className="text-rose-500">*</span></Label>
                 <Input value={form.equipment_needed} onChange={(e) => setForm({ ...form, equipment_needed: e.target.value })} placeholder={`Available: ${EQUIPMENT_OPTIONS.join(', ')}`} className="input-responsive" />
+                {errors.equipment_needed && <p className="text-xs text-rose-500">{errors.equipment_needed}</p>}
               </div>
               <div className="space-y-2 md:col-span-2">
-                <Label>Description</Label>
+                <Label>Description <span className="text-rose-500">*</span></Label>
                 <Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Additional details about the booking..." className="input-responsive min-h-[100px]" />
+                {errors.description && <p className="text-xs text-rose-500">{errors.description}</p>}
               </div>
               <div className="space-y-2 md:col-span-2">
-                <Label>Remarks</Label>
+                <Label>Remarks <span className="text-rose-500">*</span></Label>
                 <Textarea value={form.remarks} onChange={(e) => setForm({ ...form, remarks: e.target.value })} placeholder="Any special requests or remarks..." className="input-responsive min-h-[100px]" />
+                {errors.remarks && <p className="text-xs text-rose-500">{errors.remarks}</p>}
               </div>
             </div>
           </CardContent>

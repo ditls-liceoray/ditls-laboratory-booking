@@ -98,7 +98,7 @@ export default function NotesPage() {
 
         if (teachers && teachers.length > 0) {
           const notifications = teachers.map((teacher) => ({
-            note_id: note.id,            // ✅ IMPORTANTE
+            note_id: note.id,
             user_id: teacher.profile_id,
             title: form.title,
             message: form.content,
@@ -116,16 +116,16 @@ export default function NotesPage() {
             teachers
               ?.map((teacher) => teacher.email)
               .filter((email) => email) || [];
-          console.log("Teachers:", teachers);
-          console.log("Emails:", emails);
-          /* console.log("Total teachers:", teachers?.length || 0);
-          console.log("Total emails:", emails.length); */
 
           if (emails.length > 0) {
+            const { data: { session } } = await supabase.auth.getSession();
+            const accessToken = session?.access_token;
+
             const response = await fetch("/api/send-announcement", {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
+                ...(accessToken && { Authorization: `Bearer ${accessToken}` }),
               },
               body: JSON.stringify({
                 emails: emails,

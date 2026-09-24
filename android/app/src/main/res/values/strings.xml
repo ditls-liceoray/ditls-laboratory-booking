@@ -1,0 +1,8 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Liceo Laboratory Booking System</string>
+    <string name="title_activity_main">Liceo Laboratory Booking System</string>
+    <string name="package_name">com.liceo.ditls.laboratorybooking</string>
+    <string name="custom_url_scheme">com.liceo.ditls.laboratorybooking</string>
+    <string name="welcome_booking_system">Welcome to Booking System</string>
+</resources>
