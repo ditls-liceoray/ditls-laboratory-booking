@@ -9,8 +9,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2, Save, Settings as SettingsIcon, Clock, Sun, Moon, Timer, Info } from 'lucide-react';
+import { Save, Settings as SettingsIcon, Clock, Sun, Moon, Timer, Info, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { LiceoLoader } from '@/components/ui/liceo-loader';
 
 export default function SettingsPage() {
   const [settings, setSettings] = useState<Record<string, string>>({});
@@ -44,7 +45,7 @@ export default function SettingsPage() {
   };
 
   if (loading) {
-    return <div className="flex items-center justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
+    return <LiceoLoader size="lg" fullScreen />;
   }
 
   return (

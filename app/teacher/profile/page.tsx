@@ -9,8 +9,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Loader2, Save, Mail, Phone, Lock, Image as ImageIcon, User } from 'lucide-react';
+import { Save, Mail, Phone, Lock, Image as ImageIcon, User, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { LiceoLoader } from '@/components/ui/liceo-loader';
 
 export default function ProfilePage() {
   const { teacher, user, refreshProfile } = useAuth();
@@ -139,7 +140,7 @@ export default function ProfilePage() {
   };
 
   if (!teacher) {
-    return <div className="flex items-center justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
+    return <LiceoLoader size="lg" fullScreen />;
   }
 
   return (

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useMemo, useCallback } from 'react';
+import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase/client';
 import { fetchLaboratories, formatTime, formatDate } from '@/lib/api';
@@ -16,10 +16,10 @@ import {
   MapPin,
   Users,
   Plus,
-  Loader2,
   Calendar,
   Clock,
 } from 'lucide-react';
+import { LiceoLoader } from '@/components/ui/liceo-loader';
 import { cn } from '@/lib/utils';
 
 export default function SearchClassPage() {
@@ -47,6 +47,9 @@ export default function SearchClassPage() {
   // Cross-faculty schedule data loaded through the SECURITY DEFINER RPC.
   const [scheduleData, setScheduleData] = useState<Booking[]>([]);
   const [scheduleLoading, setScheduleLoading] = useState(false);
+
+  // Request ID for race condition protection when loading schedules for date change
+  const scheduleRequestId = useRef(0);
 
   // Fetch booking policy settings
   useEffect(() => {
@@ -96,7 +99,7 @@ export default function SearchClassPage() {
     setLoading(false);
   }, []);
 
-  useEffect(() => {
+useEffect(() => {
     load();
   }, [load]);
 
@@ -104,7 +107,7 @@ export default function SearchClassPage() {
   // This RPC returns pending/approved bookings from ALL faculty,
   // regardless of the currently logged-in teacher.
   const loadLabSchedule = useCallback(
-    async (laboratoryId: string, date: string) => {
+    async (laboratoryId: string, date: string, requestId?: number) => {
       if (!laboratoryId || !date) {
         setScheduleData([]);
         return;
@@ -112,35 +115,43 @@ export default function SearchClassPage() {
 
       setScheduleLoading(true);
 
-      /*  const { data, error } = await supabase.rpc('get_lab_schedule', {
-         p_laboratory_id: laboratoryId,
-         p_booking_date: date,
-       });
-  */
+      const currentRequestId = requestId ?? scheduleRequestId.current;
 
       const { data, error } = await supabase.rpc('get_lab_schedule', {
         p_laboratory_id: laboratoryId,
         p_booking_date: date,
       });
 
-      console.log('LAB SCHEDULE RPC:', {
-        laboratoryId,
-        date,
-        data,
-        error,
-      });
-      console.log('LAB SCHEDULE:', {
-        laboratoryId,
-        date,
-        data,
-        error,
-      });
+      // Ignore stale responses
+      if (requestId !== undefined && currentRequestId !== scheduleRequestId.current) {
+        return;
+      }
 
       if (error) {
         console.error('Failed to load laboratory schedule:', error);
-        setScheduleData([]);
+        setScheduleData((prev) => {
+          // Only clear if this was the latest request
+          if (requestId === undefined || currentRequestId === scheduleRequestId.current) {
+            return [];
+          }
+          return prev;
+        });
       } else {
-        setScheduleData((data || []) as unknown as Booking[]);
+        const newData = (data || []) as unknown as Booking[];
+        setScheduleData((prev) => {
+          // Only update if this is the latest request
+          if (requestId !== undefined && currentRequestId !== scheduleRequestId.current) {
+            return prev;
+          }
+          // For single lab loading (openLaboratorySchedule), replace the data
+          if (requestId === undefined) {
+            return newData;
+          }
+          // For date-change loading, merge with existing data
+          const existingIds = new Set(prev.map((b) => b.id));
+          const merged = [...prev, ...newData.filter((b) => !existingIds.has(b.id))];
+          return merged;
+        });
       }
 
       setScheduleLoading(false);
@@ -150,7 +161,7 @@ export default function SearchClassPage() {
 
   // Build availability: for each lab, show available slots.
   const availableLabs = useMemo(() => {
-    let result = labs.filter((l) => l.status === 'available');
+    let result = labs.filter((l) => l.is_active && l.status === 'available');
 
     if (search) {
       const q = search.toLowerCase();
@@ -177,7 +188,11 @@ export default function SearchClassPage() {
   // laboratory/date. bookings remains the fallback for the normal
   // current-teacher booking query.
   const bookedSlots = useMemo(() => {
-    const source = dateFilter ? scheduleData : bookings;
+    // When dateFilter is set, prefer scheduleData (cross-faculty),
+    // but fall back to bookings (own bookings) if scheduleData is empty
+    const source = dateFilter
+      ? (scheduleData.length > 0 ? scheduleData : bookings)
+      : bookings;
 
     let result = [...source];
 
@@ -278,6 +293,43 @@ export default function SearchClassPage() {
     },
     [bookedSlots, settings]
   );
+
+  // Reload schedules for all visible labs when dateFilter changes
+  useEffect(() => {
+    if (!dateFilter) {
+      setScheduleData([]);
+      return;
+    }
+
+    const currentRequestId = ++scheduleRequestId.current;
+    setScheduleData([]);
+    setScheduleLoading(true);
+
+    // Load schedules for all currently visible labs
+    const labsToLoad = availableLabs;
+
+    if (labsToLoad.length === 0) {
+      setScheduleLoading(false);
+      return;
+    }
+
+    // Fire all requests simultaneously
+    const promises = labsToLoad.map((lab) =>
+      loadLabSchedule(lab.id, dateFilter, currentRequestId)
+    );
+
+    // Wait for all to complete (or fail)
+    Promise.allSettled(promises).then((results) => {
+      // Only update loading state if this is still the latest request
+      if (currentRequestId === scheduleRequestId.current) {
+        setScheduleLoading(false);
+      }
+    });
+
+    return () => {
+      // Cleanup on date change - next effect will increment requestId
+    };
+  }, [dateFilter, availableLabs, loadLabSchedule]);
 
   const totalPages = Math.ceil(
     availableLabs.length / pageSize
@@ -380,9 +432,7 @@ export default function SearchClassPage() {
           )}
 
           {loading ? (
-            <div className="flex items-center justify-center py-16">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            </div>
+            <LiceoLoader size="lg" fullScreen />
           ) : paged.length === 0 ? (
             <EmptyState
               icon={Monitor}

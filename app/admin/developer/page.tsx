@@ -7,7 +7,7 @@ import { Code, Github, Mail, Globe, Cpu, Database, Layers, Server, GraduationCap
 export default function DeveloperPage() {
   const info = [
     { icon: Code, label: 'Developer Name', value: 'Webdev Raymund Luceño' },
-    { icon: Layers, label: 'Project Name', value: 'DITLS Computer and Robotics Laboratory Booking System' },
+    { icon: Layers, label: 'Project Name', value: 'Laboratory Management and Services Department (LMSD)' },
     { icon: Cpu, label: 'System Version', value: 'v2.0.0' },
     { icon: Code, label: 'Programming Language', value: 'TypeScript / JavaScript' },
     { icon: Globe, label: 'Framework', value: 'Next.js (React) + Tailwind CSS + ShadCN UI' },
@@ -46,7 +46,7 @@ export default function DeveloperPage() {
             <div className="flex items-start gap-3">
               <Info className="h-5 w-5 text-primary shrink-0 mt-0.5" />
               <p className="text-sm text-muted-foreground">
-                The Computer and Robotics Laboratory Booking System (CRLBS) is a modern, responsive web application designed to streamline laboratory reservations in university environments. It provides role-based access for administrators and teachers, real-time conflict detection, calendar management, and comprehensive booking tracking.
+                The Laboratory Management and Services Department (LMSD) is a modern, responsive web application designed to streamline laboratory reservations in university environments. It provides role-based access for administrators and teachers, real-time conflict detection, calendar management, and comprehensive booking tracking.
               </p>
             </div>
             <div className="space-y-2 pt-2">
@@ -72,7 +72,7 @@ export default function DeveloperPage() {
       <Card>
         <CardContent className="p-6 text-center">
           <p className="text-sm text-muted-foreground">
-            &copy; {new Date().getFullYear()} Computer and Robotics Laboratory Booking System. All rights reserved.
+            &copy; {new Date().getFullYear()} Laboratory Management and Services Department (LMSD). All rights reserved.
           </p>
           <p className="text-xs text-muted-foreground mt-1">
             Built with React, TypeScript, Tailwind CSS, ShadCN UI, and Supabase.

@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/table';
 import { BookingDetails, updateBookingStatus } from '@/components/booking-actions';
 import {
-  Search, CheckCircle, XCircle, CalendarCheck, Eye, Printer, Loader2, BookOpen, Filter,
+  Search, CheckCircle, XCircle, CalendarCheck, Eye, Printer, BookOpen, Filter,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';

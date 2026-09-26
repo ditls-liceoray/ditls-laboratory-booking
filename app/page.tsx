@@ -7,7 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Monitor, Loader2, Eye, EyeOff, Sun, Moon, ShieldCheck, User } from 'lucide-react';
+import { Monitor, Eye, EyeOff, Sun, Moon, ShieldCheck, User, Loader2 } from 'lucide-react';
+import { LiceoLoader } from '@/components/ui/liceo-loader';
 import { useTheme } from '@/lib/theme-context';
 import { toast } from 'sonner';
 import { logActivity } from '@/lib/api';
@@ -200,7 +201,7 @@ export default function LoginPage() {
                 text-[#7A0018]
               "
               >
-                DITLS
+                LMSD
               </h2>
 
               <p
@@ -211,9 +212,9 @@ export default function LoginPage() {
                 text-[#303030]
               "
               >
-                Department of Integrated
+                Laboratory Management and
                 <br />
-                Technology and Life Skills
+                Services Department
               </p>
 
             </div>
@@ -224,22 +225,21 @@ export default function LoginPage() {
         ------------------------------------------------------- */}
           <div className="mt-[42px] max-w-[650px]">
 
-            <h1
-              className="
-              text-[47px]
-              xl:text-[50px]
-              font-extrabold
-              leading-[1.06]
-              tracking-[-1.8px]
-              text-[#7A0018]
-            "
-            >
-              Computer &amp; Robotics
-              <br />
-              Laboratory Booking
-              <br />
-              System
-            </h1>
+            <h1 
+  className="
+    text-[47px] 
+    xl:text-[50px] 
+    font-extrabold 
+    leading-[1.06] 
+    tracking-[-1.8px] 
+    text-[#7A0018] 
+  "
+>
+  Laboratory Services Department (LSD)
+  Booking System
+</h1>
+
+
 
             {/* DESCRIPTION */}
             <p
@@ -257,10 +257,9 @@ export default function LoginPage() {
               </span>{" "}
               exclusively for{" "}
               <span className="font-bold text-[#7A0018]">
-                Liceo Department of Integrated Technology and Life Skills
+                Liceo Laboratory Management and Services Department (LMSD)
               </span>{" "}
-              faculty members to streamline Computer and Robotics
-              Laboratory reservations.
+              faculty members to streamline the Laboratory reservations.
             </p>
 
             {/* -----------------------------------------------------
@@ -410,10 +409,10 @@ export default function LoginPage() {
 
               <div className="text-center">
                 <h2 className="text-3xl font-extrabold tracking-tight text-[#7A0018]">
-                  DITLS
+                  LMSD
                 </h2>
                 <p className="mt-1 text-base leading-6 text-[#303030]">
-                  Department of Integrated<br />Technology and Life Skills
+                  Laboratory Management and<br />Services Department
                 </p>
               </div>
             </div>
@@ -421,14 +420,12 @@ export default function LoginPage() {
             {/* Main Title */}
             <div className="mb-6">
               <h1 className="text-3xl sm:text-4xl font-extrabold leading-tight tracking-tight text-[#7A0018] text-balance">
-                Computer & Robotics<br />Laboratory Booking<br />System
+                Laboratory Management and Services<br />Department (LMSD)
               </h1>
             </div>
 
             {/* Description */}
-            <p className="text-sm sm:text-base leading-relaxed text-[#292929] mb-6 max-w-md mx-auto">
-              Developed by <span className="font-bold text-[#7A0018]">WEBDev Raymund Luceño</span> exclusively for <span className="font-bold text-[#7A0018]">Liceo Department of Integrated Technology and Life Skills</span> faculty members to streamline Computer and Robotics Laboratory reservations.
-            </p>
+            Developed by <span className="font-bold text-[#7A0018]">WEBDev Raymund Luceño</span> exclusively for <span className="font-bold text-[#7A0018]">Liceo Laboratory Management and Services Department (LMSD)</span> faculty members to streamline laboratory reservations and management.
 
             {/* Features - compact */}
             <div className="space-y-3 max-w-md mx-auto">
@@ -763,10 +760,7 @@ export default function LoginPage() {
             >
 
               {submitting ? (
-                <>
-                  <Loader2 className="h-5 w-5 mr-3 animate-spin" />
-                  Signing in...
-                </>
+                <Loader2 className="h-5 w-5 mr-3 animate-spin" />
               ) : (
                 "Sign In"
               )}

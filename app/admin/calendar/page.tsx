@@ -12,10 +12,10 @@ import {
   Calendar,
   ChevronLeft,
   ChevronRight,
-  Loader2,
   Monitor,
   Sun,
 } from 'lucide-react';
+import { LiceoLoader } from '@/components/ui/liceo-loader';
 import { cn } from '@/lib/utils';
 
 type View = 'month' | 'week' | 'day';
@@ -266,9 +266,7 @@ export default function CalendarPage() {
           </div>
 
           {loading ? (
-            <div className="flex items-center justify-center py-20">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            </div>
+            <LiceoLoader size="lg" fullScreen />
           ) : view === 'month' ? (
             <div>
               <div className="mb-1 grid grid-cols-7 gap-1" role="row">

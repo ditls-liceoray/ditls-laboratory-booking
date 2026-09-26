@@ -9,9 +9,9 @@ import { Toaster } from '@/components/ui/sonner';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: "DITLS — Computer & Robotics Laboratory Booking System",
+  title: "Laboratory Management and Services Department (LMSD)",
   description:
-    "A modern, responsive Computer and Robotics Laboratory Booking System for universities.",
+    "A modern, responsive Laboratory Management and Services Department (LMSD) for universities.",
 
   icons: {
     icon: "/images/Ldcu_seal.png",

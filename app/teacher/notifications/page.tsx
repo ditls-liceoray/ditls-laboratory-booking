@@ -8,9 +8,10 @@ import type { Notification } from '@/lib/types';
 import { PageHeader, EmptyState, Pagination } from '@/components/shared';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Bell, CheckCircle2, AlertTriangle, Info, XCircle, Loader2, CheckCheck } from 'lucide-react';
+import { Bell, CheckCircle2, AlertTriangle, Info, XCircle, CheckCheck } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { LiceoLoader } from '@/components/ui/liceo-loader';
 
 export default function NotificationsPage() {
   const { user } = useAuth();
@@ -80,7 +81,7 @@ export default function NotificationsPage() {
       <Card>
         <CardContent className="p-4 sm:p-6">
           {loading ? (
-            <div className="flex items-center justify-center py-16"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
+            <LiceoLoader size="md" />
           ) : notifications.length === 0 ? (
             <EmptyState icon={Bell} title="No notifications" description="You'll receive notifications when your bookings are approved, rejected, or updated." />
           ) : (

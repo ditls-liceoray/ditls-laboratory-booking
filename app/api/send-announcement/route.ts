@@ -189,7 +189,7 @@ export async function POST(request: Request) {
     for (const email of emails) {
       try {
         const info = await transporter.sendMail({
-          from: `"DITLS Computer & Robotics Laboratory Booking System" <${process.env.GMAIL_USER}>`,
+          from: `"LMSD Laboratory Management and Services Department" <${process.env.GMAIL_USER}>`,
           to: email,
           subject: title,
           html: `
@@ -219,7 +219,7 @@ export async function POST(request: Request) {
               " />
 
               <p style="font-weight: bold;">
-                DITLS Computer & Robotics Laboratory Booking System
+                LMSD Laboratory Management and Services Department
               </p>
 
               <p style="

@@ -20,8 +20,9 @@ import {
   DialogDescription,
   DialogFooter,
 } from '@/components/ui/dialog';
-import { Loader2, Save, X, RotateCcw, Calendar, Clock, Monitor, AlertTriangle, Info, CheckCircle } from 'lucide-react';
+import { Save, X, RotateCcw, Calendar, Clock, Monitor, AlertTriangle, Info, CheckCircle, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { LiceoLoader } from '@/components/ui/liceo-loader';
 
 export default function BookLaboratoryPage() {
   const router = useRouter();
@@ -96,7 +97,7 @@ export default function BookLaboratoryPage() {
   useEffect(() => {
     (async () => {
       const l = await fetchLaboratories();
-      const available = l.filter((lab) => lab.status === 'available');
+      const available = l.filter((lab) => lab.is_active && lab.status === 'available');
       setLabs(available);
       const preselect = params.get('lab');
       if (preselect && available.find((x) => x.id === preselect)) {
@@ -305,7 +306,7 @@ export default function BookLaboratoryPage() {
   };
 
   if (loading) {
-    return <div className="flex items-center justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
+    return <LiceoLoader size="lg" fullScreen />;
   }
 
   return (

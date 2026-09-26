@@ -10,6 +10,7 @@ import type { Booking, Notification } from '@/lib/types';
 import { StatCard, StatusBadge, EmptyState, ContentDetailsModal } from '@/components/shared';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { LiceoLoader } from '@/components/ui/liceo-loader';
 
 import {
   CalendarCheck,
@@ -21,7 +22,6 @@ import {
   Bell,
   Monitor,
   ArrowRight,
-  Loader2,
   CheckCircle2,
   AlertTriangle,
   Info,
@@ -78,7 +78,7 @@ export default function TeacherDashboardPage() {
   }, [bookings]);
 
   if (loading) {
-    return <div className="flex items-center justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
+    return <LiceoLoader size="lg" fullScreen />;
   }
 
   if (error) {

@@ -10,9 +10,10 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { StickyNote, Plus, Pin, Trash2, Pencil, Loader2, Megaphone, Wrench, CalendarOff, Info, Bell, MoreHorizontal } from 'lucide-react';
+import { StickyNote, Plus, Pin, Trash2, Pencil, Megaphone, Wrench, CalendarOff, Info, Bell, MoreHorizontal, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { LiceoLoader } from '@/components/ui/liceo-loader';
 
 const TYPE_META: Record<NoteType, { icon: typeof Megaphone; color: string; label: string }> = {
   announcement: { icon: Megaphone, color: 'bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-400', label: 'Announcement' },
@@ -249,8 +250,8 @@ export default function NotesPage() {
           </Card>
         )}
 
-        {loading ? (
-          <div className="flex items-center justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
+{loading ? (
+            <LiceoLoader size="lg" fullScreen />
         ) : notes.length === 0 ? (
           <Card><CardContent><EmptyState icon={StickyNote} title="No notes yet" description="Create announcements, maintenance notices, or holiday messages." /></CardContent></Card>
         ) : (
