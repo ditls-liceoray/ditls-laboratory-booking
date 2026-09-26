@@ -105,8 +105,7 @@ INSERT INTO
     public.departments (name, code)
 VALUES
     (
-        'Department of Integrated Technology and Library Services',
-        'DITLS'
+        'Laboratory Services Department (LSD)'
     ) ON CONFLICT (lower(name)) DO NOTHING;
 
 -- =========================================================

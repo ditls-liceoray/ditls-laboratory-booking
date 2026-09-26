@@ -1293,7 +1293,7 @@ function SidebarContent({
         <div className="min-w-0">
 
           <p className="text-sm font-bold leading-tight tracking-[0.12em] text-white/95">
-            DITLS
+            LSMD
           </p>
 
           <p className="text-[10px] capitalize text-white/60">
