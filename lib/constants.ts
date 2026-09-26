@@ -1,5 +1,6 @@
 export const DEPARTMENTS: string[] = [
   "Department of Integrated Technology and Library Services"
+  
 ];
 
 export const POSITIONS: string[] = [

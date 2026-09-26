@@ -7,10 +7,12 @@ import { fetchActivityLogs, formatTime, formatDate, formatDateTime, fullName } f
 import { StatCard } from '@/components/shared';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { LiceoLoader } from '@/components/ui/liceo-loader';
 import {
   Users, CalendarCheck, CalendarDays, Clock, CheckCircle, XCircle,
   UserPlus, BookOpen, Activity, ArrowRight, Server, Bell,
-  CheckCircle2, AlertTriangle, Info, Monitor, Loader2, ChevronLeft, ChevronRight,
+  CheckCircle2, AlertTriangle, Info, Monitor, ChevronLeft, ChevronRight,
+  Building,
 } from 'lucide-react';
 import type { ActivityLog, Booking, Teacher } from '@/lib/types';
 import { cn } from '@/lib/utils';
@@ -85,6 +87,8 @@ export default function AdminDashboardPage() {
     { label: 'View Teachers', href: '/admin/teachers', icon: Users, color: 'bg-primary' },
     { label: 'View Classes', href: '/admin/classes', icon: BookOpen, color: 'bg-primary' },
     { label: 'View Appointments', href: '/admin/appointments', icon: CalendarCheck, color: 'bg-primary' },
+    { label: 'View Departments', href: '/admin/departments', icon: Building, color: 'bg-primary' },
+    { label: 'View Laboratories', href: '/admin/laboratories', icon: Monitor, color: 'bg-primary' },
   ];
 
   const logIcon = (action: string) => {
@@ -96,7 +100,7 @@ export default function AdminDashboardPage() {
   };
 
   if (loading) {
-    return <div className="flex items-center justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
+    return <LiceoLoader size="lg" fullScreen />;
   }
 
   if (error) {

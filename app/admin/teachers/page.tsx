@@ -7,12 +7,12 @@ import { supabase } from '@/lib/supabase/client';
 import {
   fetchTeachers,
   fetchLaboratories,
+  fetchDepartments,
   fullName,
   formatDate,
   logActivity,
 } from '@/lib/api';
-import { DEPARTMENTS } from '@/lib/constants';
-import type { Teacher, Laboratory } from '@/lib/types';
+import type { Teacher, Laboratory, Department } from '@/lib/types';
 import {
   PageHeader,
   EmptyState,
@@ -39,9 +39,9 @@ import {
   Users,
   ChevronUp,
   ChevronDown,
-  Loader2,
   MoreHorizontal,
 } from 'lucide-react';
+import { LiceoLoader } from '@/components/ui/liceo-loader';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
@@ -57,6 +57,7 @@ export default function ViewTeachersPage() {
 
   const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [labs, setLabs] = useState<Laboratory[]>([]);
+  const [departments, setDepartments] = useState<Department[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [deptFilter, setDeptFilter] = useState('all');
@@ -72,13 +73,15 @@ export default function ViewTeachersPage() {
     setLoading(true);
 
     try {
-      const [t, l] = await Promise.all([
+      const [t, l, d] = await Promise.all([
         fetchTeachers(),
         fetchLaboratories(),
+        fetchDepartments(),
       ]);
 
       setTeachers(t);
       setLabs(l);
+      setDepartments(d);
     } catch {
       toast.error('Failed to load teachers.');
     } finally {
@@ -242,18 +245,16 @@ export default function ViewTeachersPage() {
             >
               <option value="all">All Departments</option>
 
-              {DEPARTMENTS.map((d) => (
-                <option key={d} value={d}>
-                  {d}
+              {departments.map((d) => (
+                <option key={d.id} value={d.name}>
+                  {d.name}
                 </option>
               ))}
             </select>
           </div>
 
           {loading ? (
-            <div className="flex items-center justify-center py-16">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            </div>
+            <LiceoLoader size="lg" fullScreen />
           ) : paged.length === 0 ? (
             <EmptyState
               icon={Users}

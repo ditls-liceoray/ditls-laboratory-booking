@@ -61,9 +61,11 @@ import {
   AlertTriangle,
   CheckCircle2,
   Info,
-  Loader2,
   Clock,
+  Building2,
+  FlaskConical,
 } from 'lucide-react';
+import { LiceoLoader } from '@/components/ui/liceo-loader';
 
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -168,6 +170,16 @@ const adminGroups: NavGroup[] = [
         label: 'Developer',
         href: '/admin/developer',
         icon: Code,
+      },
+      {
+        label: 'Laboratories',
+        href: '/admin/laboratories',
+        icon: FlaskConical,
+      },
+      {
+        label: 'Departments',
+        href: '/admin/departments',
+        icon: Building2,
       },
       {
         label: 'System Settings',
@@ -520,15 +532,7 @@ export default function AppShell({
 
   if (loading || !authChecked) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <div className="flex flex-col items-center gap-4">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-
-          <p className="text-sm text-muted-foreground">
-            Loading...
-          </p>
-        </div>
-      </div>
+      <LiceoLoader size="lg" fullScreen />
     );
   }
 
@@ -727,7 +731,7 @@ export default function AppShell({
                     </div>
 
                     {notifications.length ===
-                    0 ? (
+                      0 ? (
                       <div className="p-8 text-center text-sm text-muted-foreground">
 
                         <Bell className="mx-auto mb-2 h-8 w-8 opacity-40" />
@@ -743,7 +747,7 @@ export default function AppShell({
                             className={cn(
                               'border-b p-3 transition-colors last:border-0 hover:bg-accent/50',
                               !n.read &&
-                                'bg-blue-50/50 dark:bg-blue-950/20'
+                              'bg-blue-50/50 dark:bg-blue-950/20'
                             )}
                           >
 
@@ -751,23 +755,23 @@ export default function AppShell({
 
                               {n.type ===
                                 'success' && (
-                                <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-500" />
-                              )}
+                                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-500" />
+                                )}
 
                               {n.type ===
                                 'error' && (
-                                <XCircle className="mt-0.5 h-4 w-4 shrink-0 text-rose-500" />
-                              )}
+                                  <XCircle className="mt-0.5 h-4 w-4 shrink-0 text-rose-500" />
+                                )}
 
                               {n.type ===
                                 'warning' && (
-                                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
-                              )}
+                                  <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
+                                )}
 
                               {n.type ===
                                 'info' && (
-                                <Info className="mt-0.5 h-4 w-4 shrink-0 text-blue-500" />
-                              )}
+                                  <Info className="mt-0.5 h-4 w-4 shrink-0 text-blue-500" />
+                                )}
 
                               <div className="min-w-0 flex-1">
 
@@ -907,7 +911,7 @@ export default function AppShell({
         ============================================================= */}
 
         <footer className="border-t px-6 py-4 text-center text-xs text-muted-foreground">
-          Computer and Robotics Laboratory Booking System v2.0.0
+          Laboratory Management and Services Department (LMSD) v2.0.0
           &middot; &copy; {new Date().getFullYear()} Liceo De Cagayan University.
           All rights reserved.
         </footer>
@@ -1333,7 +1337,7 @@ function SidebarContent({
                 (group) => {
                   const isOpen =
                     expandedGroups[
-                      group.id
+                    group.id
                     ];
 
                   const groupActive =
@@ -1390,7 +1394,7 @@ function SidebarContent({
                             'ml-auto h-3.5 w-3.5 shrink-0 transition-transform duration-200',
 
                             isOpen &&
-                              'rotate-180',
+                            'rotate-180',
 
                             groupActive
                               ? 'text-white/70'

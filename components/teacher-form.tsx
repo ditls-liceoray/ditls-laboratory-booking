@@ -3,9 +3,9 @@
 import { useState, FormEvent, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase/client';
-import { logActivity, fullName } from '@/lib/api';
-import { DEPARTMENTS, POSITIONS } from '@/lib/constants';
-import type { Teacher } from '@/lib/types';
+import { logActivity, fullName, fetchDepartments } from '@/lib/api';
+import { POSITIONS } from '@/lib/constants';
+import type { Teacher, Department } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -20,6 +20,8 @@ export default function TeacherForm({ teacher }: { teacher?: Teacher }) {
   const isEdit = !!teacher;
   const [loading, setLoading] = useState(false);
   const [uploadingPicture, setUploadingPicture] = useState(false);
+  const [departments, setDepartments] = useState<Department[]>([]);
+  const [departmentsLoading, setDepartmentsLoading] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [form, setForm] = useState({
     first_name: '',
@@ -27,7 +29,7 @@ export default function TeacherForm({ teacher }: { teacher?: Teacher }) {
     last_name: '',
     email: '',
     contact_number: '',
-    department: DEPARTMENTS[0],
+    department: '',
     position: POSITIONS[0],
     username: '',
     password: '',
@@ -36,6 +38,20 @@ export default function TeacherForm({ teacher }: { teacher?: Teacher }) {
     profile_picture: '',
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    const loadDepartments = async () => {
+      try {
+        const depts = await fetchDepartments();
+        setDepartments(depts.filter(d => d.is_active));
+      } catch {
+        toast.error('Failed to load departments.');
+      } finally {
+        setDepartmentsLoading(false);
+      }
+    };
+    loadDepartments();
+  }, []);
 
   useEffect(() => {
     if (teacher) {
@@ -158,6 +174,10 @@ export default function TeacherForm({ teacher }: { teacher?: Teacher }) {
     }
     setLoading(true);
     try {
+      // Find department_id from selected department name
+      const selectedDept = departments.find(d => d.name === form.department);
+      const departmentId = selectedDept?.id || null;
+
       if (isEdit && teacher) {
         const { error: tError } = await supabase
           .from('teachers')
@@ -168,6 +188,7 @@ export default function TeacherForm({ teacher }: { teacher?: Teacher }) {
             email: form.email,
             contact_number: form.contact_number || null,
             department: form.department,
+            department_id: departmentId,
             position: form.position,
             status: form.status,
             profile_picture: form.profile_picture || null,
@@ -226,6 +247,7 @@ export default function TeacherForm({ teacher }: { teacher?: Teacher }) {
             email: form.email,
             contact_number: form.contact_number,
             department: form.department,
+            department_id: departmentId,
             position: form.position,
             status: form.status,
             profile_picture: form.profile_picture,
@@ -252,7 +274,7 @@ export default function TeacherForm({ teacher }: { teacher?: Teacher }) {
   const reset = () => {
     setForm({
       first_name: '', middle_name: '', last_name: '', email: '', contact_number: '',
-      department: DEPARTMENTS[0], position: POSITIONS[0], username: '', password: '',
+      department: departments[0]?.name || '', position: POSITIONS[0], username: '', password: '',
       confirm_password: '', status: 'active', profile_picture: '',
     });
     setErrors({});
@@ -451,8 +473,13 @@ export default function TeacherForm({ teacher }: { teacher?: Teacher }) {
                   className="flex h-10 w-full rounded-md border border-input bg-background pl-10 pr-3 py-2 text-sm"
                   value={form.department}
                   onChange={(e) => setForm({ ...form, department: e.target.value })}
+                  disabled={departmentsLoading}
                 >
-                  {DEPARTMENTS.map((d) => <option key={d} value={d}>{d}</option>)}
+                  {departmentsLoading ? (
+                    <option value="">Loading departments...</option>
+                  ) : (
+                    departments.map((d) => <option key={d.id} value={d.name}>{d.name}</option>)
+                  )}
                 </select>
               </div>
             </div>

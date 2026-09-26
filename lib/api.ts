@@ -1,7 +1,7 @@
 'use client';
 
 import { supabase } from '@/lib/supabase/client';
-import type { ActivityLog, Booking, Laboratory, Teacher } from '@/lib/types';
+import type { ActivityLog, Booking, Laboratory, Teacher, Department } from '@/lib/types';
 
 export async function logActivity(action: string, description?: string) {
   const {
@@ -74,6 +74,15 @@ export async function fetchLaboratories(): Promise<Laboratory[]> {
     .order('name', { ascending: true });
   if (error) throw error;
   return (data || []) as Laboratory[];
+}
+
+export async function fetchDepartments(): Promise<Department[]> {
+  const { data, error } = await supabase
+    .from('departments')
+    .select('*')
+    .order('name', { ascending: true });
+  if (error) throw error;
+  return (data || []) as Department[];
 }
 
 export async function fetchActivityLogs(limit = 10): Promise<ActivityLog[]> {
